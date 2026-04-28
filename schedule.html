@@ -4,40 +4,248 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Schedule — Caribbean Gospel Radio HD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/main.css">
+<style>
+/* ── Hero ── */
+.sched-hero{background:var(--dark);border-bottom:2px solid var(--primary);
+  padding:40px 40px 24px;position:relative;overflow:hidden}
+.sched-hero-bg{position:absolute;inset:0;
+  background:radial-gradient(ellipse at 20% 100%,rgba(0,100,50,0.35) 0%,transparent 60%),
+             radial-gradient(ellipse at 80% 0%,rgba(150,70,0,0.3) 0%,transparent 50%)}
+.sched-hero-inner{position:relative;z-index:1}
+.sched-eyebrow{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--primary);margin-bottom:8px;opacity:.8}
+.sched-page-title{font-family:var(--font-d);font-size:clamp(36px,7vw,70px);color:var(--text);line-height:1;letter-spacing:2px}
+.sched-page-title .hl{color:var(--primary)}
+.sched-page-sub{font-size:12px;color:rgba(255,255,255,.4);margin-top:6px}
+
+/* ── View switcher bar ── */
+.view-bar{background:#0d0d0d;border-bottom:1px solid rgba(255,255,255,.07);
+  padding:10px 40px;display:flex;align-items:center;gap:8px}
+.view-bar-label{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:1px;
+  text-transform:uppercase;margin-right:6px}
+.view-btn{display:flex;align-items:center;gap:6px;padding:6px 14px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;cursor:pointer;color:rgba(255,255,255,.5);
+  font-size:12px;font-weight:600;font-family:var(--font-b);
+  transition:all .15s}
+.view-btn svg{width:14px;height:14px;opacity:.6}
+.view-btn:hover{border-color:var(--primary);color:var(--primary)}
+.view-btn.active{background:rgba(255,183,0,.12);border-color:var(--primary);
+  color:var(--primary)}
+.view-btn.active svg{opacity:1}
+@media(max-width:600px){.view-bar{padding:10px 16px}.view-bar-label{display:none}}
+
+/* ── Shared show row ── */
+.s-row{display:flex;align-items:center;gap:10px;padding:9px 12px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:8px}
+.s-row.is-live{background:rgba(0,200,80,.07);border-color:rgba(0,200,80,.2)}
+.s-photo{width:34px;height:34px;border-radius:50%;object-fit:cover;background:#222;
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:14px;overflow:hidden;border:1px solid rgba(255,255,255,.1)}
+.s-info{flex:1;min-width:0}
+.s-show{font-size:13px;font-weight:700;color:var(--text)}
+.s-dj{font-size:10px;color:rgba(255,255,255,.4);margin-top:1px}
+.s-time{font-size:12px;color:var(--primary);font-weight:700;white-space:nowrap}
+.s-live-tag{background:#00C853;color:#000;font-size:7px;padding:2px 6px;
+  border-radius:8px;font-weight:700;letter-spacing:1px;margin-left:6px;vertical-align:middle}
+.s-no-shows{font-size:12px;color:rgba(255,255,255,.2);padding:4px 0}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+
+/* ──────────────────────────────────────────
+   LAYOUT 1 — Day Tabs
+────────────────────────────────────────── */
+#layout-tabs{display:none}
+.day-tabs-bar{display:flex;overflow-x:auto;background:#111;
+  border-bottom:1px solid rgba(255,255,255,.07);padding:0 40px;
+  scrollbar-width:none;-ms-overflow-style:none}
+.day-tabs-bar::-webkit-scrollbar{display:none}
+.day-tab{padding:12px 16px;font-size:11px;font-weight:700;letter-spacing:.5px;
+  color:rgba(255,255,255,.35);cursor:pointer;border-bottom:2px solid transparent;
+  white-space:nowrap;transition:all .15s;position:relative;flex-shrink:0}
+.day-tab:hover{color:rgba(255,255,255,.6)}
+.day-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.day-tab .today-pip{position:absolute;top:8px;right:4px;background:var(--primary);
+  color:#000;font-size:6px;font-weight:700;padding:1px 4px;border-radius:3px;letter-spacing:.5px}
+.tabs-content{padding:24px 40px;max-width:800px}
+.tab-day-title{font-family:var(--font-d);font-size:28px;color:var(--text);
+  letter-spacing:2px;margin-bottom:16px}
+.tab-day-title span{color:var(--primary)}
+.tab-shows{display:flex;flex-direction:column;gap:8px}
+@media(max-width:600px){.day-tabs-bar{padding:0 16px}.tabs-content{padding:16px}}
+
+/* ──────────────────────────────────────────
+   LAYOUT 2 — 7-Day Grid
+────────────────────────────────────────── */
+#layout-grid{display:none;padding:24px 40px}
+.grid-7{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:rgba(255,255,255,.06);
+  border-radius:10px;overflow:hidden}
+.gcol{background:var(--dark);display:flex;flex-direction:column}
+.gcol-hdr{background:#111;padding:8px 6px;text-align:center;border-bottom:1px solid rgba(255,255,255,.06)}
+.gcol-day{font-size:9px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,.35);text-transform:uppercase}
+.gcol-day.is-today{color:var(--primary)}
+.gcol-body{padding:6px;display:flex;flex-direction:column;gap:4px;min-height:100px}
+.gcell{background:rgba(255,255,255,.05);border-radius:5px;padding:5px 7px;
+  border-left:2px solid rgba(255,183,0,.35)}
+.gcell.is-live{border-left-color:#00C853;background:rgba(0,200,80,.08)}
+.gcell-photo{width:22px;height:22px;border-radius:50%;object-fit:cover;
+  background:#333;display:flex;align-items:center;justify-content:center;
+  font-size:10px;overflow:hidden;margin-bottom:4px}
+.gcell-show{font-size:9px;font-weight:700;color:var(--text);line-height:1.2}
+.gcell-time{font-size:8px;color:var(--primary);margin-top:2px}
+.gcell-time.live-now{color:#00C853}
+.gcell-dj{font-size:8px;color:rgba(255,255,255,.3);margin-top:1px}
+.gcol-empty{font-size:9px;color:rgba(255,255,255,.15);padding:8px 6px;text-align:center}
+.grid-legend{font-size:10px;color:rgba(255,255,255,.25);margin-top:12px;text-align:right}
+@media(max-width:700px){
+  #layout-grid{padding:16px}
+  .grid-7{grid-template-columns:repeat(7,minmax(80px,1fr));overflow-x:auto}
+}
+
+/* ──────────────────────────────────────────
+   LAYOUT 3 — Split (default)
+────────────────────────────────────────── */
+#layout-split{display:grid;grid-template-columns:300px 1fr;min-height:calc(100vh - 320px);align-items:start}
+@media(max-width:700px){#layout-split{grid-template-columns:1fr}}
+.today-panel{background:var(--section-bg);border-right:1px solid rgba(255,255,255,.07);
+  padding:24px 20px;position:sticky;top:0;min-height:400px}
+.today-panel-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;
+  color:var(--primary);opacity:.7;margin-bottom:4px}
+.today-day-name{font-family:var(--font-d);font-size:32px;color:var(--text);
+  letter-spacing:2px;margin-bottom:20px}
+.today-live-card{background:rgba(0,200,80,.08);border:1px solid rgba(0,200,80,.3);
+  border-radius:10px;padding:14px;margin-bottom:18px}
+.today-live-badge{display:flex;align-items:center;gap:6px;font-size:9px;font-weight:700;
+  color:#00C853;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px}
+.today-live-dot{width:7px;height:7px;border-radius:50%;background:#00C853;
+  animation:pulse 1.4s ease-in-out infinite}
+.today-live-photo{width:52px;height:52px;border-radius:50%;object-fit:cover;
+  border:2px solid rgba(0,200,80,.4);margin-bottom:10px;display:block}
+.today-live-photo-default{width:52px;height:52px;border-radius:50%;
+  background:rgba(0,200,80,.12);display:flex;align-items:center;
+  justify-content:center;font-size:22px;margin-bottom:10px;border:2px solid rgba(0,200,80,.2)}
+.today-show-name{font-size:16px;font-weight:700;color:var(--text)}
+.today-dj-name{font-size:12px;color:rgba(255,255,255,.5);margin-top:3px}
+.today-show-time{font-size:12px;color:#00C853;font-weight:700;margin-top:6px}
+.today-no-live{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:10px;padding:20px 14px;margin-bottom:18px;text-align:center}
+.today-no-live-icon{font-size:28px;margin-bottom:6px;opacity:.4}
+.today-no-live-text{font-size:12px;color:rgba(255,255,255,.35)}
+.today-upnext-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(255,255,255,.3);margin-bottom:10px}
+.today-next-row{display:flex;align-items:center;gap:10px;padding:8px 10px;
+  background:rgba(255,255,255,.04);border-radius:8px;margin-bottom:7px;
+  border:1px solid rgba(255,255,255,.06)}
+.today-next-photo{width:30px;height:30px;border-radius:50%;background:#222;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:12px;overflow:hidden}
+.today-next-info{flex:1;min-width:0}
+.today-next-show{font-size:12px;font-weight:700;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.today-next-dj{font-size:10px;color:rgba(255,255,255,.4)}
+.today-next-time{font-size:11px;color:var(--primary);font-weight:700;white-space:nowrap}
+.week-panel{padding:24px 28px}
+.week-panel-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(255,255,255,.3);margin-bottom:18px}
+.week-day-block{margin-bottom:22px}
+.week-day-hdr{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.week-day-name{font-family:var(--font-d);font-size:18px;letter-spacing:1px;color:var(--text)}
+.week-day-name.is-today{color:var(--primary)}
+.week-today-pill{background:var(--primary);color:#000;font-size:8px;
+  font-weight:700;padding:2px 7px;border-radius:8px;letter-spacing:1px}
+.week-day-line{flex:1;height:1px;background:rgba(255,255,255,.07)}
+.week-shows{display:flex;flex-direction:column;gap:6px}
+@media(max-width:700px){
+  .today-panel{border-right:none;border-bottom:1px solid rgba(255,255,255,.07);
+    position:static;min-height:auto}
+  .week-panel{padding:20px 16px}
+  .sched-hero{padding:24px 16px 20px}
+}
+</style>
 </head>
 <body>
+
 <nav class="site-nav">
   <a href="index.html" class="logo-text">Caribbean Gospel <em>Radio HD</em></a>
   <div class="nav-links">
     <a href="index.html">Home</a>
     <a href="schedule.html" style="color:var(--primary);opacity:1">Schedule</a>
-    <a href="#shows">Shows</a>
-    <a href="#about">About</a>
-    <a href="admin/index.html" style="opacity:0.4;font-size:10px">⚙ Admin</a>
+    <a href="index.html#shows">Shows</a>
   </div>
 </nav>
 
-<!-- Decorative hero strip matching Design A -->
-<div style="background:var(--dark);border-bottom:2px solid var(--primary);padding:40px 40px 30px;position:relative;overflow:hidden">
-  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 20% 100%,rgba(0,100,50,0.35) 0%,transparent 60%),radial-gradient(ellipse at 80% 0%,rgba(150,70,0,0.3) 0%,transparent 50%)"></div>
-  <div style="position:relative;z-index:1">
-    <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--primary);margin-bottom:8px;opacity:0.8">On Air</div>
+<!-- Hero -->
+<div class="sched-hero">
+  <div class="sched-hero-bg"></div>
+  <div class="sched-hero-inner">
+    <div class="sched-eyebrow">On Air</div>
     <h1 class="sched-page-title">Weekly <span class="hl">Schedule</span></h1>
-    <p class="sched-page-sub">All shows broadcast live · Times are Eastern Caribbean Time (ECT)</p>
+    <p class="sched-page-sub">All shows broadcast live &middot; Times are Eastern Caribbean Time</p>
   </div>
 </div>
 
-<div class="sched-page" id="schedPage">
-  <div class="sched-week-grid" id="schedGrid"></div>
+<!-- View switcher -->
+<div class="view-bar">
+  <span class="view-bar-label">View</span>
+  <button class="view-btn" id="btn-tabs" onclick="setView('tabs')">
+    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+      <rect x="1" y="1" width="12" height="3" rx="1"/><rect x="1" y="6" width="5" height="7" rx="1"/><rect x="8" y="6" width="5" height="7" rx="1"/>
+    </svg>
+    Day Tabs
+  </button>
+  <button class="view-btn" id="btn-grid" onclick="setView('grid')">
+    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+      <rect x="1" y="1" width="3" height="12" rx="1"/><rect x="5.5" y="1" width="3" height="12" rx="1"/><rect x="10" y="1" width="3" height="12" rx="1"/>
+    </svg>
+    7-Day Grid
+  </button>
+  <button class="view-btn" id="btn-split" onclick="setView('split')">
+    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+      <rect x="1" y="1" width="5" height="12" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/>
+    </svg>
+    Split View
+  </button>
 </div>
 
-<!-- Minimal player bar on schedule page -->
+<!-- LAYOUT 1: Day Tabs -->
+<div id="layout-tabs">
+  <div class="day-tabs-bar" id="dayTabsBar"></div>
+  <div class="tabs-content">
+    <div class="tab-day-title" id="tabDayTitle"></div>
+    <div class="tab-shows" id="tabShows"></div>
+  </div>
+</div>
+
+<!-- LAYOUT 2: 7-Day Grid -->
+<div id="layout-grid">
+  <div class="grid-7" id="grid7"></div>
+  <div class="grid-legend">&#9679; Today &nbsp;&nbsp; &#9679; Live Now</div>
+</div>
+
+<!-- LAYOUT 3: Split -->
+<div id="layout-split">
+  <div class="today-panel">
+    <div class="today-panel-label">Today</div>
+    <div class="today-day-name" id="todayDayName">Monday</div>
+    <div id="todayLiveSlot"></div>
+    <div id="todayUpNextWrap">
+      <div class="today-upnext-label">Up Next</div>
+      <div id="todayUpNext"></div>
+    </div>
+  </div>
+  <div class="week-panel">
+    <div class="week-panel-label">Full Week</div>
+    <div id="weekGrid"></div>
+  </div>
+</div>
+
+<!-- Player bar -->
 <div class="player-bar" style="position:sticky;bottom:0;z-index:50">
   <audio id="audio-el-s" preload="none"></audio>
   <div class="player-info" style="padding:10px 20px">
     <div class="on-air-pill"><div class="air-dot"></div> Live Now</div>
-    <div class="track-title" id="sTrackTitle">Caribbean Gospel Radio HD — Live Stream</div>
+    <div class="track-title" id="sTrackTitle">Caribbean Gospel Radio HD &mdash; Live Stream</div>
   </div>
   <div class="player-controls">
     <div class="waveform">
@@ -46,68 +254,254 @@
       <div class="wbar" style="width:3px;height:24px"></div><div class="wbar" style="width:3px;height:12px"></div>
     </div>
     <button class="play-circle" id="sPlayBtn" onclick="toggleSPlay()" aria-label="Play"></button>
-    <div class="vol-wrap">
-      <div class="vol-track"><div class="vol-fill" style="width:70%"></div></div>
-    </div>
+    <div class="vol-wrap"><div class="vol-track"><div class="vol-fill" style="width:70%"></div></div></div>
   </div>
 </div>
 
 <footer class="site-footer">
-  <div class="footer-copy">© <span id="footerYear"></span> Caribbean Gospel Radio HD · All Rights Reserved</div>
+  <div class="footer-copy">&copy; <span id="footerYear"></span> Caribbean Gospel Radio HD &middot; All Rights Reserved</div>
   <div class="footer-right">Broadcasting the Gospel Across the Islands</div>
 </footer>
 
 <script src="js/store.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('footerYear').textContent = new Date().getFullYear();
-  const cfg = CRHD.getConfig();
-  applyColors(cfg.colors);
-  renderGrid(cfg.schedule, cfg.djs);
-  if (cfg.station?.streamUrl) document.getElementById('audio-el-s').src = cfg.station.streamUrl;
-  window.addEventListener('crhdConfigUpdate', e => {
-    applyColors(e.detail.colors);
-    renderGrid(e.detail.schedule, e.detail.djs);
+'use strict';
+const DAY_NAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAY_SHORT=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAY_PATTERNS={
+  0:['sun','sunday','weekend','daily','everyday'],
+  1:['mon','monday','mon – fri','mon-fri','mon–fri','weekday','daily','everyday'],
+  2:['tue','tuesday','mon – fri','mon-fri','mon–fri','tue & thu','tue&thu','tue and thu','weekday','daily','everyday'],
+  3:['wed','wednesday','weekday','daily','everyday'],
+  4:['thu','thursday','tue & thu','tue&thu','tue and thu','weekday','daily','everyday'],
+  5:['fri','friday','weekday','daily','everyday'],
+  6:['sat','saturday','weekend','daily','everyday'],
+};
+
+let _schedule=[], _djs=[], _todayNum=0, _nowMin=0, _activeTabDay=0;
+
+function parseTimeToMinutes(t){
+  if(!t)return null;
+  const s=t.trim().toUpperCase();
+  const m=s.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/);
+  if(!m)return null;
+  let h=parseInt(m[1]);const mn=parseInt(m[2]);const p=m[3];
+  if(p==='PM'&&h!==12)h+=12;if(p==='AM'&&h===12)h=0;
+  return h*60+mn;
+}
+function showMatchesDay(show,dayNum){
+  const ds=(show.day||'').toLowerCase();
+  const patterns=DAY_PATTERNS[dayNum]||[];
+  const custom=ds.split(',').map(d=>d.trim());
+  const ts=DAY_SHORT[dayNum].toLowerCase();
+  if(custom.some(d=>d===ts))return true;
+  return patterns.some(p=>ds.includes(p));
+}
+function showIsLive(show,dayNum,nowMin){
+  if(!showMatchesDay(show,dayNum))return false;
+  if(show.liveOverride)return true;
+  const parts=(show.time||'').split(/[–\-—]/);
+  if(parts.length<2)return false;
+  const start=parseTimeToMinutes(parts[0]);let end=parseTimeToMinutes(parts[1]);
+  if(start===null||end===null)return false;
+  if(end<=start)end+=1440;
+  return nowMin>=start&&nowMin<end;
+}
+function sortedShows(dayNum){
+  return (_schedule||[])
+    .filter(s=>showMatchesDay(s,dayNum))
+    .sort((a,b)=>(parseTimeToMinutes((a.time||'').split(/[–\-—]/)[0])||0)-(parseTimeToMinutes((b.time||'').split(/[–\-—]/)[0])||0));
+}
+function dj(djId){return(_djs||[]).find(d=>String(d.id)===String(djId));}
+function photoEl(djObj,cls,defCls){
+  if(djObj&&djObj.photo)return`<img src="${djObj.photo}" alt="${djObj.name||''}" class="${cls}">`;
+  return`<div class="${defCls}">🎧</div>`;
+}
+function sRow(s,dayNum,nowMin){
+  const d=dj(s.djId);const live=showIsLive(s,dayNum,nowMin);
+  return`<div class="s-row${live?' is-live':''}">
+    <div class="s-photo">${d&&d.photo?`<img src="${d.photo}" style="width:100%;height:100%;object-fit:cover">`:'🎧'}</div>
+    <div class="s-info"><div class="s-show">${s.show}${live?'<span class="s-live-tag">ON AIR</span>':''}</div>${d?`<div class="s-dj">${d.name}</div>`:''}</div>
+    <div class="s-time">${s.time}</div>
+  </div>`;
+}
+
+/* ── View switcher ── */
+function setView(v){
+  ['tabs','grid','split'].forEach(id=>{
+    document.getElementById('layout-'+id).style.display='none';
+    document.getElementById('btn-'+id).classList.remove('active');
   });
+  document.getElementById('layout-'+v).style.display=(v==='split')?'grid':(v==='grid'?'block':'block');
+  document.getElementById('btn-'+v).classList.add('active');
+  localStorage.setItem('schedView',v);
+  if(v==='tabs') renderTabs();
+  if(v==='grid') renderGrid7();
+  if(v==='split') renderSplit();
+}
+
+/* ── Layout 1: Day Tabs ── */
+function renderTabs(){
+  const bar=document.getElementById('dayTabsBar');
+  bar.innerHTML='';
+  for(let i=0;i<7;i++){
+    const dayNum=(_todayNum+i)%7;
+    const btn=document.createElement('div');
+    btn.className='day-tab'+(dayNum===_activeTabDay?' active':'');
+    btn.textContent=DAY_NAMES[dayNum];
+    if(dayNum===_todayNum){
+      const pip=document.createElement('span');pip.className='today-pip';pip.textContent='TODAY';
+      btn.appendChild(pip);
+    }
+    btn.onclick=(()=>{const d=dayNum;return()=>{_activeTabDay=d;renderTabs();}})();
+    bar.appendChild(btn);
+  }
+  const shows=sortedShows(_activeTabDay);
+  const isToday=_activeTabDay===_todayNum;
+  const title=document.getElementById('tabDayTitle');
+  title.innerHTML=DAY_NAMES[_activeTabDay]+(isToday?` <span>— Today</span>`:'');
+  const el=document.getElementById('tabShows');
+  el.innerHTML=shows.length===0?'<div class="s-no-shows">No shows scheduled</div>':
+    shows.map(s=>sRow(s,_activeTabDay,isToday?_nowMin:-1)).join('');
+}
+
+/* ── Layout 2: 7-Day Grid ── */
+function renderGrid7(){
+  const grid=document.getElementById('grid7');grid.innerHTML='';
+  for(let i=0;i<7;i++){
+    const dayNum=(_todayNum+i)%7;
+    const isToday=dayNum===_todayNum;
+    const shows=sortedShows(dayNum);
+    const col=document.createElement('div');col.className='gcol';
+    col.innerHTML=`<div class="gcol-hdr"><div class="gcol-day${isToday?' is-today':''}">${DAY_SHORT[dayNum].toUpperCase()}${isToday?'<br><span style="font-size:7px;color:var(--primary)">TODAY</span>':''}</div></div>
+      <div class="gcol-body" id="gc-${dayNum}"></div>`;
+    grid.appendChild(col);
+    const body=col.querySelector(`#gc-${dayNum}`);
+    if(shows.length===0){body.innerHTML=`<div class="gcol-empty">—</div>`;}
+    else{shows.forEach(s=>{
+      const d=dj(s.djId);const live=isToday&&showIsLive(s,dayNum,_nowMin);
+      const cell=document.createElement('div');cell.className='gcell'+(live?' is-live':'');
+      cell.innerHTML=`<div class="gcell-photo">${d&&d.photo?`<img src="${d.photo}" style="width:100%;height:100%;object-fit:cover">`:'🎧'}</div>`+
+        `<div class="gcell-show">${s.show}</div>`+
+        `<div class="gcell-time${live?' live-now':''}">${live?'● LIVE':s.time.split(/[–\-—]/)[0].trim()}</div>`+
+        (d?`<div class="gcell-dj">${d.name}</div>`:'');
+      body.appendChild(cell);
+    });}
+  }
+}
+
+/* ── Layout 3: Split ── */
+function renderSplit(){
+  document.getElementById('todayDayName').textContent=DAY_NAMES[_todayNum];
+  const todayShows=sortedShows(_todayNum);
+  const liveShow=todayShows.find(s=>showIsLive(s,_todayNum,_nowMin));
+  const liveSlot=document.getElementById('todayLiveSlot');
+  if(liveShow){
+    const d=dj(liveShow.djId);
+    liveSlot.innerHTML=`<div class="today-live-card">
+      <div class="today-live-badge"><div class="today-live-dot"></div>On Air Now</div>
+      ${photoEl(d,'today-live-photo','today-live-photo-default')}
+      <div class="today-show-name">${liveShow.show}</div>
+      ${d?`<div class="today-dj-name">${d.name}</div>`:''}
+      <div class="today-show-time">${liveShow.time}</div>
+    </div>`;
+  } else {
+    liveSlot.innerHTML=`<div class="today-no-live">
+      <div class="today-no-live-icon">📻</div>
+      <div class="today-no-live-text">No show live right now</div>
+    </div>`;
+  }
+  const upNext=todayShows.filter(s=>{
+    if(s===liveShow)return false;
+    const st=parseTimeToMinutes((s.time||'').split(/[–\-—]/)[0]);
+    return st!==null&&st>_nowMin;
+  }).slice(0,3);
+  const upNextWrap=document.getElementById('todayUpNextWrap');
+  const upNextEl=document.getElementById('todayUpNext');
+  if(upNext.length===0){upNextWrap.style.display='none';}
+  else{
+    upNextWrap.style.display='block';upNextEl.innerHTML='';
+    upNext.forEach(s=>{
+      const d=dj(s.djId);
+      const row=document.createElement('div');row.className='today-next-row';
+      row.innerHTML=`<div class="today-next-photo">${d&&d.photo?`<img src="${d.photo}" style="width:100%;height:100%;object-fit:cover">`:'🎵'}</div>`+
+        `<div class="today-next-info"><div class="today-next-show">${s.show}</div>${d?`<div class="today-next-dj">${d.name}</div>`:''}</div>`+
+        `<div class="today-next-time">${(s.time||'').split(/[–\-—]/)[0].trim()}</div>`;
+      upNextEl.appendChild(row);
+    });
+  }
+  const weekGrid=document.getElementById('weekGrid');weekGrid.innerHTML='';
+  for(let i=0;i<7;i++){
+    const dayNum=(_todayNum+i)%7;
+    const isToday=dayNum===_todayNum;
+    const shows=sortedShows(dayNum);
+    const block=document.createElement('div');block.className='week-day-block';
+    block.innerHTML=`<div class="week-day-hdr">
+        <div class="week-day-name${isToday?' is-today':''}">${DAY_NAMES[dayNum]}</div>
+        ${isToday?'<span class="week-today-pill">TODAY</span>':''}
+        <div class="week-day-line"></div>
+      </div><div class="week-shows" id="ws-${dayNum}"></div>`;
+    weekGrid.appendChild(block);
+    const showsEl=block.querySelector(`#ws-${dayNum}`);
+    showsEl.innerHTML=shows.length===0?'<div class="s-no-shows">No shows scheduled</div>':
+      shows.map(s=>sRow(s,dayNum,isToday?_nowMin:-1)).join('');
+  }
+}
+
+function applyColors(col){
+  if(!col)return;
+  const r=document.documentElement.style;
+  r.setProperty('--primary',col.primary||'#FFB700');
+  r.setProperty('--accent',col.accent||'#CC0000');
+  r.setProperty('--dark',col.dark||'#0a0a0a');
+  r.setProperty('--nav-bg',col.navBg||'rgba(0,0,0,0.92)');
+  r.setProperty('--player-bg',col.playerBg||'#111111');
+  r.setProperty('--section-bg',col.sectionBg||'#111111');
+  r.setProperty('--footer-bg',col.footerBg||'#0d0d0d');
+  r.setProperty('--text',col.text||'#ffffff');
+}
+
+function initTime(tz){
+  const now=new Date();
+  const fmt=new Intl.DateTimeFormat('en-US',{timeZone:tz,weekday:'short',hour:'numeric',minute:'2-digit',hour12:true});
+  const pts={};fmt.formatToParts(now).forEach(p=>{pts[p.type]=p.value;});
+  const dn=(pts.weekday||'').toLowerCase().slice(0,3);
+  let h=parseInt(pts.hour||'0');const mn=parseInt(pts.minute||'0');
+  const ap=(pts.dayPeriod||'').toUpperCase();
+  if(ap==='PM'&&h!==12)h+=12;if(ap==='AM'&&h===12)h=0;
+  _todayNum=DAY_SHORT.map(d=>d.toLowerCase()).indexOf(dn);
+  if(_todayNum<0)_todayNum=0;
+  _nowMin=h*60+mn;
+  _activeTabDay=_todayNum;
+}
+
+document.addEventListener('DOMContentLoaded',async()=>{
+  document.getElementById('footerYear').textContent=new Date().getFullYear();
+  const cfg=await CRHD.getConfig();
+  applyColors(cfg.colors);
+  _schedule=cfg.schedule||[];
+  _djs=cfg.djs||[];
+  const tz=cfg.station?.timezone||'America/New_York';
+  if(cfg.station?.streamUrl)document.getElementById('audio-el-s').src=cfg.station.streamUrl;
+  initTime(tz);
+  // Restore saved view or default to split
+  const saved=localStorage.getItem('schedView')||'split';
+  setView(saved);
+  // Refresh every 60s
+  setInterval(()=>{
+    initTime(tz);
+    const cur=localStorage.getItem('schedView')||'split';
+    if(cur==='tabs')renderTabs();
+    else if(cur==='grid')renderGrid7();
+    else renderSplit();
+  },60000);
 });
 
-function applyColors(col) {
-  const r = document.documentElement.style;
-  r.setProperty('--primary',    col.primary    || '#FFB700');
-  r.setProperty('--accent',     col.accent     || '#CC0000');
-  r.setProperty('--dark',       col.dark       || '#0a0a0a');
-  r.setProperty('--nav-bg',     col.navBg      || 'rgba(0,0,0,0.92)');
-  r.setProperty('--player-bg',  col.playerBg   || '#111111');
-  r.setProperty('--section-bg', col.sectionBg  || '#111111');
-  r.setProperty('--footer-bg',  col.footerBg   || '#0d0d0d');
-}
-
-function renderGrid(schedule, djs) {
-  const grid = document.getElementById('schedGrid');
-  grid.innerHTML = '';
-  (schedule || []).forEach(s => {
-    const dj   = (djs || []).find(d => d.id === s.djId);
-    const card = document.createElement('div');
-    card.className = 'sched-card' + (s.live ? ' live-now' : '');
-    card.innerHTML = `
-      <div class="scard-day">${s.day}</div>
-      <div class="scard-info">
-        <div class="scard-show">
-          ${s.show}
-          ${s.live ? '<span class="scard-live-pill"><span class="air-dot" style="background:#fff"></span>LIVE NOW</span>' : ''}
-        </div>
-        <div class="scard-dj">${dj ? 'Hosted by ' + dj.name : ''}</div>
-      </div>
-      <div class="scard-time">${s.time}</div>`;
-    grid.appendChild(card);
-  });
-}
-
-function toggleSPlay() {
-  const a = document.getElementById('audio-el-s');
-  const btn = document.getElementById('sPlayBtn');
-  if (a.paused) { a.play().catch(()=>{}); btn.classList.add('playing'); }
-  else          { a.pause();              btn.classList.remove('playing'); }
+function toggleSPlay(){
+  const a=document.getElementById('audio-el-s');
+  const btn=document.getElementById('sPlayBtn');
+  if(a.paused){a.play().catch(()=>{});btn.classList.add('playing');}
+  else{a.pause();btn.classList.remove('playing');}
 }
 </script>
 </body>
