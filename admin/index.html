@@ -234,6 +234,10 @@ async function loadCfg() {
   cfg._soc_deleted   = [];
   cfg._flag_deleted  = [];
   renderAll();
+  // Restore last active tab
+  const savedTab = localStorage.getItem('adminTab') || 'djs';
+  const tabEl = document.querySelector(`.nav-item[onclick*="'${savedTab}'"]`);
+  if (tabEl) switchTab(savedTab, tabEl);
 }
 
 function renderAll() {
@@ -248,11 +252,17 @@ function renderAll() {
 }
 
 // ── TABS ──────────────────────────────────────────────────
+let _activeTab = localStorage.getItem('adminTab') || 'djs';
+let _activeTabEl = null;
+
 function switchTab(tab, el) {
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
   el.classList.add('active');
+  _activeTab = tab;
+  _activeTabEl = el;
+  localStorage.setItem('adminTab', tab);
 }
 
 // ── DJs ───────────────────────────────────────────────────
@@ -271,17 +281,17 @@ function makeDJCard(dj) {
       <div class="dj-photo-preview" id="djphoto-${dj.id}">
         ${dj.photo ? `<img src="${esc(dj.photo)}" alt="">` : `<div class="dj-photo-placeholder">🎧</div>`}
       </div>
-      <label class="upload-photo-btn">📷<input type="file" accept="image/*" style="display:none" onchange="uploadDJPhoto(${dj.id},this)"></label>
-      <button class="btn-sm" style="margin-top:3px;font-size:9px" onclick="clearDJPhoto(${dj.id})">Clear</button>
+      <label class="upload-photo-btn">📷<input type="file" accept="image/*" style="display:none" onchange="uploadDJPhoto('${dj.id}',this)"></label>
+      <button class="btn-sm" style="margin-top:3px;font-size:9px" onclick="clearDJPhoto('${dj.id}')">Clear</button>
     </div>
     <div class="dj-card-info">
       <div class="row2">
-        <div class="field"><label>Name</label><input type="text" value="${esc(dj.name)}" onchange="djSet(${dj.id},'name',this.value)"></div>
-        <div class="field"><label>Photo URL</label><input type="url" id="djurl-${dj.id}" value="${esc(dj.photo&&!dj.photo.startsWith('data:')?dj.photo:'')}" placeholder="https://…" onchange="djSet(${dj.id},'photo',this.value);refreshDJThumb(${dj.id})"></div>
+        <div class="field"><label>Name</label><input type="text" id="djname-${dj.id}" value="${esc(dj.name)}" oninput="djSet('${dj.id}','name',this.value)"></div>
+        <div class="field"><label>Photo URL</label><input type="url" id="djurl-${dj.id}" value="${esc(dj.photo&&!dj.photo.startsWith('data:')?dj.photo:'')}" placeholder="https://…" oninput="djSet('${dj.id}','photo',this.value);refreshDJThumb('${dj.id}')"></div>
       </div>
-      <div class="field"><label>Bio</label><textarea rows="2" onchange="djSet(${dj.id},'bio',this.value)">${esc(dj.bio||'')}</textarea></div>
+      <div class="field"><label>Bio</label><textarea rows="2" id="djbio-${dj.id}" oninput="djSet('${dj.id}','bio',this.value)">${esc(dj.bio||'')}</textarea></div>
     </div>
-    <button class="btn-sm danger" style="align-self:flex-start" onclick="removeDJ(${dj.id})">✕</button>`;
+    <button class="btn-sm danger" style="align-self:flex-start" onclick="removeDJ('${dj.id}')">✕</button>`;
   return div;
 }
 
@@ -293,11 +303,11 @@ function addDJ() {
 function removeDJ(id) {
   if (!confirm('Remove this DJ?')) return;
   if (!String(id).startsWith('new_')) cfg._dj_deleted.push(id);
-  cfg.djs = cfg.djs.filter(d=>d.id!==id);
+  cfg.djs = cfg.djs.filter(d=>String(d.id)!==String(id));
   renderDJs();
 }
 function djSet(id, field, val) {
-  const d = cfg.djs.find(d=>d.id===id);
+  const d = cfg.djs.find(d=>String(d.id)===String(id));
   if (d) d[field] = val;
 }
 function uploadDJPhoto(id, input) {
@@ -308,7 +318,7 @@ function uploadDJPhoto(id, input) {
 }
 function clearDJPhoto(id) { djSet(id,'photo',''); refreshDJThumb(id); }
 function refreshDJThumb(id) {
-  const dj = cfg.djs.find(d=>d.id===id);
+  const dj = cfg.djs.find(d=>String(d.id)===String(id));
   const w  = document.getElementById('djphoto-'+id);
   if (!w||!dj) return;
   w.innerHTML = dj.photo ? `<img src="${esc(dj.photo)}" alt="">` : `<div class="dj-photo-placeholder">🎧</div>`;
@@ -562,22 +572,22 @@ function renderDownloads() {
     div.innerHTML=`
       <div class="link-item-img-col">
         <div class="link-img-preview" id="dlimg-${d.id}">${d.img?`<img src="${esc(d.img)}" alt="">`:'<span class="link-img-placeholder">🖼</span>'}</div>
-        <label class="upload-photo-btn" style="font-size:9px;padding:4px 6px;margin-top:4px">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadLinkImg('dl',${d.id},this)"></label>
-        <button class="btn-sm" style="font-size:9px;margin-top:3px;width:100%" onclick="clearLinkImg('dl',${d.id})">Clear</button>
+        <label class="upload-photo-btn" style="font-size:9px;padding:4px 6px;margin-top:4px">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadLinkImg('dl','${d.id}',this)"></label>
+        <button class="btn-sm" style="font-size:9px;margin-top:3px;width:100%" onclick="clearLinkImg('dl','${d.id}')">Clear</button>
       </div>
       <div class="link-item-info">
         <div class="row3">
-          <div class="field"><label>Platform</label><input type="text" value="${esc(d.platform)}" onchange="dlSet(${d.id},'platform',this.value)"></div>
-          <div class="field"><label>Sub-label</label><input type="text" value="${esc(d.sub)}" onchange="dlSet(${d.id},'sub',this.value)"></div>
-          <div class="field"><label>URL</label><input type="url" value="${esc(d.url)}" onchange="dlSet(${d.id},'url',this.value)"></div>
+          <div class="field"><label>Platform</label><input type="text" value="${esc(d.platform)}" onchange="dlSet('${d.id}','platform',this.value)"></div>
+          <div class="field"><label>Sub-label</label><input type="text" value="${esc(d.sub)}" onchange="dlSet('${d.id}','sub',this.value)"></div>
+          <div class="field"><label>URL</label><input type="url" value="${esc(d.url)}" onchange="dlSet('${d.id}','url',this.value)"></div>
         </div>
       </div>
-      <button class="btn-sm danger" style="align-self:flex-start" onclick="removeDl(${d.id})">✕</button>`;
+      <button class="btn-sm danger" style="align-self:flex-start" onclick="removeDl('${d.id}')">✕</button>`;
     el.appendChild(div);
   });
 }
-function dlSet(id,f,v){const d=cfg.downloads.find(x=>x.id===id);if(d)d[f]=v;}
-function removeDl(id){if(!String(id).startsWith('new_'))cfg._dl_deleted.push(id);cfg.downloads=cfg.downloads.filter(d=>d.id!==id);renderDownloads();}
+function dlSet(id,f,v){const d=cfg.downloads.find(x=>String(x.id)===String(id));if(d)d[f]=v;}
+function removeDl(id){if(!String(id).startsWith('new_'))cfg._dl_deleted.push(id);cfg.downloads=cfg.downloads.filter(d=>String(d.id)!==String(id));renderDownloads();}
 function addDownload(){cfg.downloads.push({id:'new_'+Date.now(),platform:'New Platform',sub:'Available on',img:'',url:'#',color:'#222',icon:'',_new:true});renderDownloads();}
 
 // ── SOCIALS ───────────────────────────────────────────────
@@ -588,24 +598,24 @@ function renderSocials() {
     div.innerHTML=`
       <div class="link-item-img-col">
         <div class="link-img-preview" id="socimg-${s.id}">${s.img?`<img src="${esc(s.img)}" alt="">`:'<span class="link-img-placeholder">📱</span>'}</div>
-        <label class="upload-photo-btn" style="font-size:9px;padding:4px 6px;margin-top:4px">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadLinkImg('soc',${s.id},this)"></label>
-        <button class="btn-sm" style="font-size:9px;margin-top:3px;width:100%" onclick="clearLinkImg('soc',${s.id})">Clear</button>
+        <label class="upload-photo-btn" style="font-size:9px;padding:4px 6px;margin-top:4px">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadLinkImg('soc','${s.id}',this)"></label>
+        <button class="btn-sm" style="font-size:9px;margin-top:3px;width:100%" onclick="clearLinkImg('soc','${s.id}')">Clear</button>
       </div>
       <div class="link-item-info">
         <div class="row2">
-          <div class="field"><label>Platform</label><input type="text" value="${esc(s.platform)}" onchange="socSet(${s.id},'platform',this.value)"></div>
-          <div class="field"><label>URL</label><input type="url" value="${esc(s.url)}" onchange="socSet(${s.id},'url',this.value)"></div>
+          <div class="field"><label>Platform</label><input type="text" value="${esc(s.platform)}" onchange="socSet('${s.id}','platform',this.value)"></div>
+          <div class="field"><label>URL</label><input type="url" value="${esc(s.url)}" onchange="socSet('${s.id}','url',this.value)"></div>
         </div>
         <div class="field"><label>Background Colour</label>
-          <input type="color" value="${s.color==='gradient'?'#e1306c':s.color}" onchange="socSet(${s.id},'color',this.value)" style="width:100%;height:34px;border:1px solid rgba(255,255,255,.1);border-radius:6px;background:#111;padding:2px 4px;cursor:pointer">
+          <input type="color" value="${s.color==='gradient'?'#e1306c':s.color}" onchange="socSet('${s.id}','color',this.value)" style="width:100%;height:34px;border:1px solid rgba(255,255,255,.1);border-radius:6px;background:#111;padding:2px 4px;cursor:pointer">
         </div>
       </div>
-      <button class="btn-sm danger" style="align-self:flex-start" onclick="removeSoc(${s.id})">✕</button>`;
+      <button class="btn-sm danger" style="align-self:flex-start" onclick="removeSoc('${s.id}')">✕</button>`;
     el.appendChild(div);
   });
 }
-function socSet(id,f,v){const s=cfg.socials.find(x=>x.id===id);if(s)s[f]=v;}
-function removeSoc(id){if(!String(id).startsWith('new_'))cfg._soc_deleted.push(id);cfg.socials=cfg.socials.filter(s=>s.id!==id);renderSocials();}
+function socSet(id,f,v){const s=cfg.socials.find(x=>String(x.id)===String(id));if(s)s[f]=v;}
+function removeSoc(id){if(!String(id).startsWith('new_'))cfg._soc_deleted.push(id);cfg.socials=cfg.socials.filter(s=>String(s.id)!==String(id));renderSocials();}
 function addSocial(){cfg.socials.push({id:'new_'+Date.now(),platform:'New',url:'#',color:'#333',img:'',icon:'',_new:true});renderSocials();}
 
 // ── SHARED LINK IMAGE UPLOAD ──────────────────────────────
@@ -653,6 +663,14 @@ function addFlag(){cfg.flags.push({id:'new_'+Date.now(),name:'Country',code:'xx'
 // ── SAVE ──────────────────────────────────────────────────
 async function saveAll() {
   if (!CRHD.isLoggedIn()) { showLogin(); return; }
+
+  // Flush any unsaved DOM values into cfg (catches cases where oninput didn't fire)
+  (cfg.djs||[]).forEach(dj => {
+    const nameEl = document.getElementById('djname-'+dj.id);
+    const bioEl  = document.getElementById('djbio-'+dj.id);
+    if (nameEl) dj.name = nameEl.value;
+    if (bioEl)  dj.bio  = bioEl.value;
+  });
 
   const btn = document.getElementById('saveBtn');
   btn.textContent = 'Saving…'; btn.disabled = true;
@@ -766,6 +784,16 @@ async function saveAll() {
     showToast('✓ Saved!', false);
     btn.textContent = '✓ Saved!'; btn.classList.add('saved');
     setTimeout(()=>{ btn.textContent='Save Changes'; btn.classList.remove('saved'); btn.disabled=false; }, 2500);
+
+    // Re-render dynamic lists so new IDs are reflected in DOM (prevents double-save bug)
+    renderDJs();
+    renderShows();
+    renderDownloads();
+    renderSocials();
+    renderFlags();
+
+    // Restore active tab
+    if (_activeTab && _activeTabEl) switchTab(_activeTab, _activeTabEl);
 
   } catch(err) {
     console.error('Save error:', err);

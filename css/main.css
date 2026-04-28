@@ -197,7 +197,7 @@ body{font-family:var(--font-b);background:var(--dark);color:var(--text);
 .main-grid{display:grid;grid-template-columns:repeat(3,1fr);
   background:var(--section-bg);flex:1;align-items:stretch}
 .section-block{padding:24px 26px;border-right:1px solid rgba(255,255,255,.07);
-  display:flex;flex-direction:column;min-height:calc(100vh - 520px)}
+  display:flex;flex-direction:column}
 .section-block:last-child{border-right:none}
 .sec-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;
   color:var(--primary);margin-bottom:16px;font-weight:600;
@@ -205,28 +205,31 @@ body{font-family:var(--font-b);background:var(--dark);color:var(--text);
 .sec-label::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07)}
 
 /* Schedule — bigger text */
-.sched-row{padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06);
-  display:flex;justify-content:space-between;align-items:center}
+.sched-row{padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex;justify-content:space-between;align-items:center;gap:10px}
 .sched-row:last-child{border-bottom:none}
-.sched-show{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
-.sched-day{font-size:12px;opacity:.45;margin-top:2px}
-.sched-time{font-size:13px;color:var(--primary);font-weight:700;text-align:right;white-space:nowrap}
-.live-tag{display:inline-flex;align-items:center;gap:5px;background:#00C853;
-  font-size:8px;padding:3px 8px;border-radius:10px;font-weight:700;
-  letter-spacing:1px;animation:livePulse 2s infinite}
-.live-tag::before{content:'';width:5px;height:5px;border-radius:50%;
-  background:#fff;animation:blink 1s infinite}
-@keyframes livePulse{0%,100%{box-shadow:0 0 0 0 rgba(0,200,83,.4)}50%{box-shadow:0 0 0 6px rgba(0,200,83,0)}}
+.sched-row-live{background:rgba(0,200,80,.04);border-radius:8px;padding:10px 8px;margin:0 -8px}
+.sched-left{display:flex;align-items:center;gap:10px;min-width:0}
+.sched-dj-photo{width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(255,255,255,.1)}
+.sched-dj-photo-default{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.sched-info{min-width:0}
+.sched-show{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sched-dj-name{font-size:11px;opacity:.5;margin-top:2px}
+.sched-time{font-size:12px;color:var(--primary);font-weight:700;text-align:right;white-space:nowrap;flex-shrink:0}
+.sched-empty{font-size:13px;opacity:.4;padding:16px 0;text-align:center}
+.live-tag{background:#00C853;color:#000;font-size:8px;padding:2px 6px;
+  border-radius:10px;font-weight:700;letter-spacing:1px;margin-left:6px;vertical-align:middle}
 
-/* Chat — taller, fills column */
+/* Chat — fills full column height */
 .chat-outer{background:#0d0d0d;border-radius:10px;overflow:hidden;
-  display:flex;flex-direction:column;flex:1;min-height:500px}
+  display:flex;flex-direction:column;flex:1}
 .chat-head{background:#1a1a1a;padding:10px 14px;display:flex;align-items:center;
   justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
 .chat-head-title{font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px}
 .chat-online{font-size:10px;background:rgba(0,200,80,.15);color:#00C853;
   padding:2px 8px;border-radius:10px;font-weight:700}
-.cbox-wrap{flex:1;min-height:460px;overflow:hidden;position:relative}
+.cbox-wrap{flex:1;min-height:300px;overflow:hidden;position:relative}
 .cbox-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:none;display:block;
   filter:invert(1) hue-rotate(180deg) brightness(.92) contrast(.95)}
 .cbox-wrap::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
@@ -240,8 +243,8 @@ body{font-family:var(--font-b);background:var(--dark);color:var(--text);
   background:rgba(255,255,255,.04);
   transition:border-color .15s,transform .15s}
 .app-row:hover{border-color:var(--primary);transform:translateY(-1px)}
-/* Badge image — fills full width, keeps natural proportions */
-.app-row img.badge{display:block;width:100%;height:60px;object-fit:contain;background:#000;border-radius:11px}
+/* Badge image — fixed 60px height, full width */
+.app-row img.badge{display:block;width:100%;height:60px;object-fit:contain;border-radius:11px;background:#000}
 /* Fallback icon+text row when no image */
 .app-row.icon-row{display:flex;align-items:center;gap:12px;padding:11px 14px}
 .app-icon-box{width:44px;height:44px;border-radius:9px;flex-shrink:0;
@@ -249,6 +252,18 @@ body{font-family:var(--font-b);background:var(--dark);color:var(--text);
 .app-dl-sub{font-size:9px;opacity:.4;text-transform:uppercase;letter-spacing:1px}
 .app-dl-name{font-size:13px;font-weight:700}
 .app-row-arrow{margin-left:auto;opacity:.3;font-size:16px}
+
+/* Social bar */
+.social-bar{background:var(--footer-bg);border-top:1px solid rgba(255,180,0,.1);
+  padding:16px 40px;display:flex;align-items:center;
+  justify-content:space-between;flex-wrap:wrap;gap:12px}
+.social-icons{display:flex;gap:8px;flex-wrap:wrap}
+.sib{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;
+  justify-content:center;font-size:14px;cursor:pointer;text-decoration:none;
+  color:var(--text);transition:transform .15s,border-color .15s}
+.sib:hover{transform:translateY(-2px);border-color:var(--primary)}
+.footer-label{font-size:11px;opacity:.3;letter-spacing:1px;text-transform:uppercase}
 
 /* Social list rows */
 .social-list{display:flex;flex-direction:column;gap:8px}
@@ -259,11 +274,12 @@ body{font-family:var(--font-b);background:var(--dark);color:var(--text);
 .soc-row:hover{border-color:var(--primary);background:rgba(255,183,0,.05)}
 .soc-icon-box{width:36px;height:36px;border-radius:9px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center}
-.soc-name{font-size:13px;font-weight:700}
+.soc-name{font-size:13px;font-weight:700;flex:1}
+
+/* Footer */
 .site-footer{background:#000;padding:12px 40px;display:flex;align-items:center;
   justify-content:space-between;flex-wrap:wrap;gap:8px;
-  border-top:1px solid rgba(255,255,255,.06);
-  position:sticky;bottom:0;z-index:50}
+  border-top:1px solid rgba(255,255,255,.06);margin-top:auto}
 .footer-copy{font-size:10px;opacity:.25;letter-spacing:1px}
 .footer-right{font-size:10px;color:var(--primary);font-weight:700;letter-spacing:1px}
 

@@ -15,8 +15,6 @@
     <a href="index.html">Home</a>
     <a href="schedule.html">Schedule</a>
     <a href="#shows">Shows</a>
-    <a href="#about">About</a>
-    <a href="admin/index.html" style="opacity:0.4;font-size:10px">⚙ Admin</a>
   </div>
 </nav>
 
@@ -121,7 +119,7 @@
 <!-- MAIN GRID -->
 <div class="main-grid">
   <div class="section-block">
-    <div class="sec-label">&#128197; This Week's Lineup</div>
+    <div class="sec-label" id="schedLabel">&#128197; Today's Schedule</div>
     <div id="scheduleList"></div>
   </div>
   <div class="section-block">
@@ -211,9 +209,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initVolume();
   buildFlagsTicker();
   detectLiveShow();
-  setInterval(detectLiveShow, 15000);
-  // Run again after 2s in case config took time to load
-  setTimeout(detectLiveShow, 2000);
+  setInterval(detectLiveShow, 60000);
   pollStreamMeta();
   setInterval(pollStreamMeta, 15000);
 
@@ -310,23 +306,66 @@ function renderFlags(flags) {
   });
 }
 
+function showMatchesToday(show, todayNum) {
+  const dayStr = (show.day || '').toLowerCase();
+  const patterns = DAY_PATTERNS[todayNum] || [];
+  // Also handle custom comma-separated days like "Mon, Tue, Wed"
+  const customDays = dayStr.split(',').map(d => d.trim());
+  const todayShort = ['sun','mon','tue','wed','thu','fri','sat'][todayNum];
+  if (customDays.some(d => d === todayShort)) return true;
+  return patterns.some(p => dayStr.includes(p));
+}
+
 function renderSchedule(schedule, djs) {
   const el = document.getElementById('scheduleList');
   el.innerHTML = '';
-  if (!schedule || schedule.length === 0) {
-    el.innerHTML = '<div style="opacity:0.3;font-size:12px;padding:12px 0">No shows scheduled yet.</div>';
+
+  const tz = (cfg && cfg.station && cfg.station.timezone) || 'America/New_York';
+  const now = new Date();
+
+  // Get today's day number in station timezone
+  const dayFmt = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short' });
+  const dayName = dayFmt.format(now).toLowerCase().slice(0, 3);
+  const todayNum = ['sun','mon','tue','wed','thu','fri','sat'].indexOf(dayName);
+
+  // Filter to today's shows only
+  const todays = (schedule || []).filter(s => showMatchesToday(s, todayNum));
+
+  // Sort by start time
+  todays.sort((a, b) => {
+    const ta = parseTimeToMinutes((a.time||'').split(/[–\-—]/)[0]) || 0;
+    const tb = parseTimeToMinutes((b.time||'').split(/[–\-—]/)[0]) || 0;
+    return ta - tb;
+  });
+
+  if (todays.length === 0) {
+    el.innerHTML = '<div class="sched-empty">No shows scheduled for today</div>';
     return;
   }
-  schedule.forEach(s => {
+
+  // Update section label with day name
+  const dayLabel = document.getElementById('schedLabel');
+  const fullDay = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'long' }).format(now);
+  if (dayLabel) dayLabel.innerHTML = `&#128197; ${fullDay}'s Schedule`;
+
+  todays.forEach(s => {
+    const dj = (djs || []).find(d => String(d.id) === String(s.djId));
     const row = document.createElement('div');
-    row.className = 'sched-row';
-    const liveTag = s.live ? '<span class="live-tag">ON AIR</span>' : '';
+    row.className = 'sched-row' + (s.live ? ' sched-row-live' : '');
+
+    const photoHtml = dj && dj.photo
+      ? `<img src="${dj.photo}" alt="${dj.name}" class="sched-dj-photo">`
+      : `<div class="sched-dj-photo sched-dj-photo-default">🎧</div>`;
+
     row.innerHTML =
-      '<div>' +
-        '<div class="sched-show">' + s.show + liveTag + '</div>' +
-        '<div class="sched-day">' + s.day + '</div>' +
-      '</div>' +
-      '<div class="sched-time">' + s.time + '</div>';
+      `<div class="sched-left">` +
+        photoHtml +
+        `<div class="sched-info">` +
+          `<div class="sched-show">${s.show}${s.live ? '<span class="live-tag">ON AIR</span>' : ''}</div>` +
+          (dj ? `<div class="sched-dj-name">${dj.name}</div>` : '') +
+        `</div>` +
+      `</div>` +
+      `<div class="sched-time">${s.time}</div>`;
     el.appendChild(row);
   });
 }
@@ -339,14 +378,14 @@ function renderDownloads(downloads) {
     a.href = d.url || '#';
     a.target = '_blank';
     if (d.img) {
-      // Uploaded badge image — full width, natural proportions
+      // Badge image — full width, 60px height
       a.className = 'app-row';
-      a.innerHTML = `<img class="badge" src="${d.img}" alt="${d.platform}">`;
+      a.innerHTML = `<img src="${d.img}" alt="${d.platform}" class="badge">`;
     } else {
-      // No image — icon + text fallback
+      // Fallback — icon + text row
       a.className = 'app-row icon-row';
       a.innerHTML =
-        `<div class="app-icon-box" style="background:${d.color||'#222'};color:#fff">${ICONS[d.icon]||d.platform[0]}</div>` +
+        `<div class="app-icon-box" style="background:${d.color||'#222'};color:#fff">${ICONS[d.icon] || d.platform[0]}</div>` +
         `<div><div class="app-dl-sub">${d.sub}</div><div class="app-dl-name">${d.platform}</div></div>` +
         `<div class="app-row-arrow">&#8599;</div>`;
     }
@@ -355,7 +394,7 @@ function renderDownloads(downloads) {
 }
 
 function renderSocials(socials) {
-  // Legacy social bar (removed) — skip silently
+  // Legacy social bar — skip silently
   const bar = document.getElementById('socialIcons');
   if (bar) bar.innerHTML = '';
 
@@ -368,7 +407,6 @@ function renderSocials(socials) {
     a.className = 'soc-row';
     a.href = s.url || '#';
     a.target = '_blank';
-    // Icon box
     let iconHtml;
     if (s.img) {
       iconHtml = `<div class="soc-icon-box" style="padding:0;overflow:hidden"><img src="${s.img}" alt="${s.platform}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:9px"></div>`;
@@ -396,21 +434,25 @@ let currentDJPhoto  = '';
 let isDJLive        = false;
 
 function resolvePlayerImage() {
-  const img = document.getElementById('playerImg');
-  const def = document.getElementById('playerImgDefault');
-  // Hide badge — LIVE indicator is now in the schedule list only
-  const badge = document.getElementById('playerImgBadge');
-  if (badge) badge.style.display = 'none';
+  const img     = document.getElementById('playerImg');
+  const def     = document.getElementById('playerImgDefault');
+  const badge   = document.getElementById('playerImgBadge');
+  const badgeTxt = document.getElementById('playerImgBadgeText');
 
   if (isDJLive && currentDJPhoto) {
     setPlayerImg(currentDJPhoto, img, def);
+    badge.style.display = 'block';
+    badgeTxt.textContent = 'ON AIR';
   } else if (currentAlbumArt) {
     setPlayerImg(currentAlbumArt, img, def);
+    badge.style.display = 'none';
   } else if (cfg && cfg.station && cfg.station.logo) {
     setPlayerImg(cfg.station.logo, img, def);
+    badge.style.display = 'none';
   } else {
     img.style.display = 'none';
     def.style.display = 'flex';
+    badge.style.display = 'none';
   }
 }
 
@@ -455,8 +497,16 @@ audioEl.addEventListener('pause', () => {
    acts as an override.
 ═══════════════════════════════════════════ */
 
-// Day name patterns to match schedule strings — handled in showMatchesNow
-
+// Day name patterns to match schedule strings
+const DAY_PATTERNS = {
+  0: ['sun','sunday'],
+  1: ['mon','monday','mon – fri','mon-fri','mon–fri','weekday','daily','everyday'],
+  2: ['tue','tuesday','mon – fri','mon-fri','mon–fri','tue & thu','tue&thu','tue and thu','weekday','daily','everyday'],
+  3: ['wed','wednesday','weekday','daily','everyday'],
+  4: ['thu','thursday','tue & thu','tue&thu','tue and thu','weekday','daily','everyday'],
+  5: ['fri','friday','weekday','daily','everyday'],
+  6: ['sat','saturday','weekend','daily','everyday'],
+};
 
 function parseTimeToMinutes(timeStr) {
   // Parses "6:00 AM", "9:00 PM", "21:00" etc → total minutes from midnight
@@ -473,33 +523,14 @@ function parseTimeToMinutes(timeStr) {
 }
 
 function showMatchesNow(show, nowDay, nowMinutes) {
-  const dayStr = (show.day || '').toLowerCase().trim();
+  const dayStr = (show.day || '').toLowerCase();
 
-  // Match against current day (0=Sun, 1=Mon ... 6=Sat)
-  const DAY_NAMES = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
-  const DAY_SHORT = ['sun','mon','tue','wed','thu','fri','sat'];
-  const today     = DAY_NAMES[nowDay];
-  const todayShort = DAY_SHORT[nowDay];
-
-  let dayMatch = false;
-
-  if (dayStr === 'daily' || dayStr === 'everyday') {
-    dayMatch = true;
-  } else if (dayStr === 'weekdays (mon–fri)' || dayStr === 'weekdays (mon-fri)' || dayStr === 'weekdays') {
-    dayMatch = nowDay >= 1 && nowDay <= 5;
-  } else if (dayStr === 'weekends (sat–sun)' || dayStr === 'weekends (sat-sun)' || dayStr === 'weekends') {
-    dayMatch = nowDay === 0 || nowDay === 6;
-  } else if (dayStr === today || dayStr === todayShort) {
-    dayMatch = true;
-  } else {
-    // Custom — comma-separated days e.g. "Mon, Tue, Wed"
-    const parts = dayStr.split(',').map(d => d.trim());
-    dayMatch = parts.some(p => p === todayShort || p === today || today.startsWith(p) || todayShort.startsWith(p));
-  }
-
+  // Check day matches
+  const patterns = DAY_PATTERNS[nowDay] || [];
+  const dayMatch = patterns.some(p => dayStr.includes(p));
   if (!dayMatch) return false;
 
-  // Parse time range
+  // Parse time range e.g. "6:00 AM – 9:00 AM" or "10:00 PM – 12:00 AM"
   const timeStr = show.time || '';
   const parts   = timeStr.split(/[–\-—]/);
   if (parts.length < 2) return false;
@@ -507,7 +538,10 @@ function showMatchesNow(show, nowDay, nowMinutes) {
   const start = parseTimeToMinutes(parts[0]);
   let   end   = parseTimeToMinutes(parts[1]);
   if (start === null || end === null) return false;
-  if (end <= start) end += 1440; // crosses midnight
+
+  // Handle shows that cross midnight — end time (e.g. 12:00 AM = 0) is less than start
+  // Treat midnight end as 1440 (24:00) so the range works
+  if (end <= start) end += 1440;
 
   return nowMinutes >= start && nowMinutes < end;
 }
@@ -560,9 +594,9 @@ function renderActiveDJ(djs, activeId, schedule) {
   const showLine = document.getElementById('djShowName');
 
   if (liveShow) {
-    // Look up DJ — compare as strings to avoid int/string type mismatch
-    const dj = (djs || []).find(d => String(d.id) === String(liveShow.djId));
-    isDJLive       = true;
+    // Look up DJ from the separate djs array by djId
+    const dj = (djs || []).find(d => d.id === liveShow.djId);
+    isDJLive      = true;
     currentDJPhoto = (dj && dj.photo) || '';
     const djName   = (dj && dj.name)  || '';
     showLine.textContent = djName ? djName + ' \u2014 ' + liveShow.show : liveShow.show;
