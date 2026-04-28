@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin — Caribbean Gospel Radio HD</title>
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<!-- LOGIN OVERLAY -->
+<div id="loginOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#1c1c1c;border:1px solid rgba(255,183,0,0.3);border-radius:12px;padding:40px;width:340px;text-align:center">
+    <div style="font-size:22px;font-weight:700;margin-bottom:4px">Caribbean <span style="color:#FFB700">Gospel Radio HD</span></div>
+    <div style="font-size:11px;opacity:0.4;margin-bottom:28px;letter-spacing:1px;text-transform:uppercase">Admin Login</div>
+    <input id="loginUser" type="text" placeholder="Username" style="width:100%;background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:10px 14px;color:#fff;font-size:14px;margin-bottom:10px;box-sizing:border-box;font-family:inherit">
+    <input id="loginPass" type="password" placeholder="Password" style="width:100%;background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:10px 14px;color:#fff;font-size:14px;margin-bottom:16px;box-sizing:border-box;font-family:inherit" onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="loginError" style="color:#ff6b6b;font-size:12px;min-height:18px;margin-bottom:10px"></div>
+    <button onclick="doLogin()" style="width:100%;background:#FFB700;color:#000;font-weight:700;font-size:14px;padding:11px;border:none;border-radius:8px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;font-family:inherit">Login</button>
+  </div>
+</div>
+
+<div class="admin-wrap">
+<aside class="sidebar">
+  <div class="sidebar-logo">Caribbean <em>Radio HD</em><span>Admin</span></div>
+  <div class="nav-group">
+    <div class="nav-group-label">Content</div>
+    <a class="nav-item active" onclick="switchTab('djs',this)"><span class="ico">🎧</span> DJs & Hosts</a>
+    <a class="nav-item" onclick="switchTab('schedule',this)"><span class="ico">📅</span> Show Schedule</a>
+    <a class="nav-item" onclick="switchTab('hero',this)"><span class="ico">🖼</span> Hero Section</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Links</div>
+    <a class="nav-item" onclick="switchTab('downloads',this)"><span class="ico">📲</span> Download Links</a>
+    <a class="nav-item" onclick="switchTab('socials',this)"><span class="ico">🌐</span> Social Media</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Settings</div>
+    <a class="nav-item" onclick="switchTab('station',this)"><span class="ico">📡</span> Station & Stream</a>
+    <a class="nav-item" onclick="switchTab('colors',this)"><span class="ico">🎨</span> Colors & Theme</a>
+    <a class="nav-item" onclick="switchTab('flags',this)"><span class="ico">🏳</span> Caribbean Flags</a>
+  </div>
+  <div class="sidebar-footer">
+    <button id="logoutBtn" onclick="doLogout()" style="display:none;width:100%;background:rgba(255,255,255,0.07);color:#fff;border:1px solid rgba(255,255,255,0.12);padding:8px;border-radius:6px;cursor:pointer;font-size:12px;margin-bottom:8px">Log Out</button>
+    <a href="../index.html" class="back-link">← Back to Site</a>
+  </div>
+</aside>
+
+<div class="admin-main">
+  <div class="admin-header">
+    <h1>Site <span>Admin</span></h1>
+    <button class="save-btn" id="saveBtn" onclick="saveAll()">Save Changes</button>
+  </div>
+
+  <!-- DJs -->
+  <div class="tab-content active" id="tab-djs">
+    <div class="card">
+      <div class="card-title">🎧 DJs &amp; Hosts</div>
+      <p style="font-size:12px;opacity:0.5;margin-bottom:16px">Add each DJ here, then assign them to shows in <strong style="color:#FFB700">Show Schedule</strong>.</p>
+      <div id="djList"></div>
+      <button class="btn-add" onclick="addDJ()">+ Add DJ / Host</button>
+    </div>
+  </div>
+
+  <!-- Schedule -->
+  <div class="tab-content" id="tab-schedule">
+    <div class="card">
+      <div class="card-title">📅 Show Schedule</div>
+      <p style="font-size:12px;opacity:0.5;margin-bottom:6px">The site auto-detects the current show based on day &amp; time. <strong style="color:#FFB700">Manual Override</strong> forces a show live regardless of time.</p>
+      <div id="schedList"></div>
+      <button class="btn-add" onclick="addShow()">+ Add Show</button>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <div class="tab-content" id="tab-hero">
+    <div class="card">
+      <div class="card-title">Hero Background</div>
+      <div class="field"><label>Background Type</label>
+        <select id="heroBgType" onchange="toggleHeroMedia()">
+          <option value="gradient">Gradient (Default)</option>
+          <option value="image">Image</option>
+          <option value="video">Video</option>
+        </select>
+      </div>
+      <div id="heroMediaSection" style="display:none">
+        <div class="field"><label>Upload File</label>
+          <div class="upload-zone" onclick="document.getElementById('heroFile').click()">
+            <div class="uz-icon">📁</div><p>Click to upload</p><small>JPG · PNG · WebP · MP4 · WebM</small>
+          </div>
+          <input type="file" id="heroFile" accept="image/*,video/*" style="display:none" onchange="handleHeroFile(this)">
+          <div id="heroPreview" style="display:none;margin-top:10px;border-radius:8px;overflow:hidden;max-height:160px;position:relative">
+            <img id="heroPreviewImg" src="" style="display:none;width:100%;object-fit:cover">
+            <video id="heroPreviewVid" src="" muted autoplay loop style="display:none;width:100%"></video>
+            <button onclick="clearHero()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.7);color:#fff;border:none;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:13px">✕</button>
+          </div>
+        </div>
+        <div class="field"><label>Or paste a URL</label>
+          <input type="url" id="heroUrl" placeholder="https://…" oninput="heroSrc=this.value">
+        </div>
+      </div>
+      <div class="field"><label>Overlay Darkness</label>
+        <input type="range" id="heroOverlay" min="0" max="1" step="0.05" value="0.35" style="width:100%;accent-color:#FFB700" oninput="document.getElementById('overlayVal').textContent=this.value">
+        <small style="opacity:0.4">Value: <span id="overlayVal">0.35</span></small>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Hero Text</div>
+      <div class="field"><label>Eyebrow line</label><input type="text" id="heroTagline" placeholder="Broadcasting 24/7…"></div>
+      <div class="row3">
+        <div class="field"><label>Headline 1</label><input type="text" id="heroH1" placeholder="Praise"></div>
+        <div class="field"><label>Headline 2 (gold)</label><input type="text" id="heroH2" placeholder="Worship"></div>
+        <div class="field"><label>Headline 3</label><input type="text" id="heroH3" placeholder="Word"></div>
+      </div>
+      <div class="field"><label>Sub-line</label><input type="text" id="heroSub" placeholder="The Sound of the Islands…"></div>
+    </div>
+  </div>
+
+  <!-- Downloads -->
+  <div class="tab-content" id="tab-downloads">
+    <div class="card">
+      <div class="card-title">📲 Download &amp; Listen Links</div>
+      <div id="downloadList"></div>
+      <button class="btn-add" onclick="addDownload()">+ Add Platform</button>
+    </div>
+  </div>
+
+  <!-- Socials -->
+  <div class="tab-content" id="tab-socials">
+    <div class="card">
+      <div class="card-title">🌐 Social Media Links</div>
+      <div id="socialList"></div>
+      <button class="btn-add" onclick="addSocial()">+ Add Social</button>
+    </div>
+  </div>
+
+  <!-- Station -->
+  <div class="tab-content" id="tab-station">
+    <div class="card">
+      <div class="card-title">Station Info</div>
+      <div class="field"><label>Station Name</label><input type="text" id="stName" placeholder="Caribbean Gospel HD"></div>
+      <div class="field"><label>Timezone</label>
+        <select id="stTz">
+          <option value="America/New_York">Eastern US (EST/EDT) — New York</option>
+          <option value="America/Barbados">Eastern Caribbean (ECT)</option>
+          <option value="America/Trinidad">Trinidad & Tobago</option>
+          <option value="America/Jamaica">Jamaica</option>
+          <option value="America/Puerto_Rico">Puerto Rico</option>
+          <option value="America/Chicago">Central US (CST/CDT)</option>
+          <option value="America/Los_Angeles">Pacific US (PST/PDT)</option>
+          <option value="Europe/London">UK (GMT/BST)</option>
+          <option value="UTC">UTC</option>
+        </select>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Station Logo</div>
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        <div id="logoPreview" style="width:80px;height:80px;border-radius:8px;overflow:hidden;background:#111;border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <img id="logoImg" src="" style="display:none;width:100%;height:100%;object-fit:contain">
+          <span id="logoPlaceholder" style="font-size:24px;opacity:0.2">🎙</span>
+        </div>
+        <div style="flex:1">
+          <div class="field"><label>Logo URL</label><input type="url" id="stLogoUrl" placeholder="https://…" oninput="previewLogo(this.value)"></div>
+          <label class="upload-photo-btn" style="display:inline-block;margin-bottom:6px">📷 Upload Logo<input type="file" id="stLogoFile" accept="image/*" style="display:none" onchange="uploadLogo(this)"></label>
+          <button class="btn-sm" onclick="clearLogo()" style="display:block">Clear Logo</button>
+        </div>
+      </div>
+      <input type="hidden" id="stLogo">
+    </div>
+    <div class="card">
+      <div class="card-title">📡 Radio Stream</div>
+      <div class="field"><label>Stream URL</label><input type="url" id="stStream" placeholder="https://aud1.sjamz.com:8008/stream"></div>
+      <div class="field"><label>Metadata URL</label><input type="url" id="stMeta" placeholder="https://aud1.sjamz.com:8008/status-json.xsl"></div>
+      <div class="row2">
+        <div class="field"><label>Fallback URL</label><input type="url" id="stFallback"></div>
+        <div class="field"><label>Bitrate</label><input type="text" id="stBitrate" placeholder="128kbps"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">💬 CBox Chat</div>
+      <div class="row2">
+        <div class="field"><label>Box ID</label><input type="text" id="cboxId" placeholder="643954"></div>
+        <div class="field"><label>Box Tag</label><input type="text" id="cboxTag" placeholder="afkdvf"></div>
+      </div>
+      <div class="field"><label>Full Embed URL</label><input type="url" id="cboxEmbed" placeholder="https://www5.cbox.ws/box/?boxid=…"></div>
+    </div>
+  </div>
+
+  <!-- Colors -->
+  <div class="tab-content" id="tab-colors">
+    <div class="card">
+      <div class="card-title">Brand Colors</div>
+      <div class="color-grid" id="colorGrid"></div>
+    </div>
+  </div>
+
+  <!-- Flags -->
+  <div class="tab-content" id="tab-flags">
+    <div class="card">
+      <div class="card-title">Caribbean Flags Ticker</div>
+      <div id="flagList"></div>
+      <button class="btn-add" onclick="addFlag()">+ Add Country</button>
+    </div>
+  </div>
+
+</div><!-- /admin-main -->
+</div><!-- /admin-wrap -->
+
+<div id="toast">✓ Saved!</div>
+
+<script src="../js/store.js"></script>
+<script>
+'use strict';
+
+let cfg = {};
+let heroSrc = '';
+
+// ── BOOT ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!CRHD.isLoggedIn()) {
+    showLogin();
+  } else {
+    document.getElementById('logoutBtn').style.display = 'block';
+    await loadCfg();
+  }
+});
+
+async function loadCfg() {
+  cfg = await CRHD.getConfig();
+  cfg._dj_deleted    = [];
+  cfg._show_deleted  = [];
+  cfg._dl_deleted    = [];
+  cfg._soc_deleted   = [];
+  cfg._flag_deleted  = [];
+  renderAll();
+}
+
+function renderAll() {
+  renderDJs();
+  renderShows();
+  loadHero();
+  loadStation();
+  loadColors();
+  renderDownloads();
+  renderSocials();
+  renderFlags();
+}
+
+// ── TABS ──────────────────────────────────────────────────
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── DJs ───────────────────────────────────────────────────
+function renderDJs() {
+  const el = document.getElementById('djList');
+  el.innerHTML = '';
+  (cfg.djs||[]).forEach(dj => el.appendChild(makeDJCard(dj)));
+}
+
+function makeDJCard(dj) {
+  const div = document.createElement('div');
+  div.className = 'dj-card';
+  div.id = 'djcard-' + dj.id;
+  div.innerHTML = `
+    <div class="dj-card-photo">
+      <div class="dj-photo-preview" id="djphoto-${dj.id}">
+        ${dj.photo ? `<img src="${esc(dj.photo)}" alt="">` : `<div class="dj-photo-placeholder">🎧</div>`}
+      </div>
+      <label class="upload-photo-btn">📷<input type="file" accept="image/*" style="display:none" onchange="uploadDJPhoto(${dj.id},this)"></label>
+      <button class="btn-sm" style="margin-top:3px;font-size:9px" onclick="clearDJPhoto(${dj.id})">Clear</button>
+    </div>
+    <div class="dj-card-info">
+      <div class="row2">
+        <div class="field"><label>Name</label><input type="text" value="${esc(dj.name)}" onchange="djSet(${dj.id},'name',this.value)"></div>
+        <div class="field"><label>Photo URL</label><input type="url" id="djurl-${dj.id}" value="${esc(dj.photo&&!dj.photo.startsWith('data:')?dj.photo:'')}" placeholder="https://…" onchange="djSet(${dj.id},'photo',this.value);refreshDJThumb(${dj.id})"></div>
+      </div>
+      <div class="field"><label>Bio</label><textarea rows="2" onchange="djSet(${dj.id},'bio',this.value)">${esc(dj.bio||'')}</textarea></div>
+    </div>
+    <button class="btn-sm danger" style="align-self:flex-start" onclick="removeDJ(${dj.id})">✕</button>`;
+  return div;
+}
+
+function addDJ() {
+  const id = 'new_' + Date.now();
+  cfg.djs.push({ id, name:'New DJ', photo:'', bio:'', _new:true });
+  renderDJs();
+}
+function removeDJ(id) {
+  if (!confirm('Remove this DJ?')) return;
+  if (!String(id).startsWith('new_')) cfg._dj_deleted.push(id);
+  cfg.djs = cfg.djs.filter(d=>d.id!==id);
+  renderDJs();
+}
+function djSet(id, field, val) {
+  const d = cfg.djs.find(d=>d.id===id);
+  if (d) d[field] = val;
+}
+function uploadDJPhoto(id, input) {
+  const f = input.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = e => { djSet(id,'photo',e.target.result); refreshDJThumb(id); };
+  r.readAsDataURL(f);
+}
+function clearDJPhoto(id) { djSet(id,'photo',''); refreshDJThumb(id); }
+function refreshDJThumb(id) {
+  const dj = cfg.djs.find(d=>d.id===id);
+  const w  = document.getElementById('djphoto-'+id);
+  if (!w||!dj) return;
+  w.innerHTML = dj.photo ? `<img src="${esc(dj.photo)}" alt="">` : `<div class="dj-photo-placeholder">🎧</div>`;
+}
+
+// ── SCHEDULE ──────────────────────────────────────────────
+function renderShows() {
+  const el = document.getElementById('schedList');
+  el.innerHTML = '';
+  (cfg.schedule||[]).forEach(s => el.appendChild(makeShowCard(s)));
+}
+
+function makeShowCard(s) {
+  const opts = (cfg.djs||[]).map(d=>`<option value="${d.id}" ${d.id==s.djId?'selected':''}>${esc(d.name)}</option>`).join('');
+
+  // Parse stored day/time back into UI fields
+  const dayVal  = s.day  || 'Daily';
+  const timeStr = s.time || '12:00 PM – 2:00 PM';
+  const timeParts = timeStr.split(/\s*[–\-—]\s*/);
+  const startStr  = (timeParts[0]||'12:00 PM').trim();
+  const endStr    = (timeParts[1]||'2:00 PM').trim();
+
+  // Parse start/end into h, m, period
+  function parseT(t) {
+    const m = t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+    return m ? { h:m[1], m:m[2], p:m[3].toUpperCase() } : { h:'12', m:'00', p:'PM' };
+  }
+  const st = parseT(startStr), et = parseT(endStr);
+
+  // Determine preset vs custom
+  const PRESETS = ['Daily','Weekdays (Mon–Fri)','Weekends (Sat–Sun)','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday','Custom'];
+  const isPreset = PRESETS.includes(dayVal) || dayVal === 'Custom';
+  const presetVal = isPreset ? dayVal : 'Custom';
+
+  // Custom days checkboxes state
+  const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const checkedDays = presetVal === 'Custom' ? dayVal.split(',').map(d=>d.trim()) : [];
+
+  const hoursOpts = Array.from({length:12},(_,i)=>{const h=String(i+1).padStart(2,'0');return`<option value="${h}" ${(st.h==h||st.h==(i+1))?'selected':''}>${h}</option>`;}).join('');
+  const hoursOptsE = Array.from({length:12},(_,i)=>{const h=String(i+1).padStart(2,'0');return`<option value="${h}" ${(et.h==h||et.h==(i+1))?'selected':''}>${h}</option>`;}).join('');
+  const minsOpts  = Array.from({length:60},(_,i)=>{const m=String(i).padStart(2,'0');return`<option value="${m}" ${st.m===m?'selected':''}>${m}</option>`;}).join('');
+  const minsOptsE = Array.from({length:60},(_,i)=>{const m=String(i).padStart(2,'0');return`<option value="${m}" ${et.m===m?'selected':''}>${m}</option>`;}).join('');
+
+  const div = document.createElement('div');
+  div.className = 'show-card';
+  div.id = 'showcard-' + s.id;
+  div.innerHTML = `
+    <div class="show-card-header">
+      <div class="show-card-title" id="showlabel-${s.id}">${esc(s.show)}</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <label class="toggle-wrap">
+          <input type="checkbox" ${s.liveOverride?'checked':''} onchange="showSet('${s.id}','liveOverride',this.checked)">
+          <div class="toggle-slider"></div>
+          <span style="font-size:10px;opacity:.5">Force Live</span>
+        </label>
+        <button class="btn-sm danger" onclick="removeShow('${s.id}')">✕ Remove</button>
+      </div>
+    </div>
+
+    <div class="show-fields">
+      <div class="field-group">
+        <label>Show Name</label>
+        <input type="text" value="${esc(s.show)}" onchange="showSet('${s.id}','show',this.value);document.getElementById('showlabel-${s.id}').textContent=this.value">
+      </div>
+      <div class="field-group">
+        <label>Assigned DJ</label>
+        <select onchange="showSet('${s.id}','djId',this.value?parseInt(this.value):null)">
+          <option value="">— None —</option>${opts}
+        </select>
+      </div>
+    </div>
+
+    <!-- Day selector -->
+    <div style="margin-top:12px">
+      <label class="fi" style="display:block;margin-bottom:6px">Broadcast Day(s)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <select class="day-preset" id="daypreset-${s.id}" onchange="onDayPreset('${s.id}',this.value)" style="background:#111;border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:7px 10px;color:#fff;font-family:inherit;font-size:13px">
+          ${PRESETS.map(p=>`<option value="${p}" ${p===presetVal?'selected':''}>${p}</option>`).join('')}
+        </select>
+      </div>
+      <div id="customdays-${s.id}" style="display:${presetVal==='Custom'?'flex':'none'};gap:6px;flex-wrap:wrap;margin-top:8px">
+        ${DAYS.map(d=>`
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;background:rgba(255,255,255,.05);padding:4px 10px;border-radius:6px;font-size:12px">
+            <input type="checkbox" value="${d}" ${checkedDays.includes(d)?'checked':''} onchange="onCustomDay('${s.id}')">
+            ${d}
+          </label>`).join('')}
+      </div>
+    </div>
+
+    <!-- Time selector -->
+    <div style="margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
+      <div>
+        <label class="fi" style="display:block;margin-bottom:5px">Start Time</label>
+        <div style="display:flex;gap:4px;align-items:center">
+          <select id="sh-${s.id}" style="background:#111;border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:7px 6px;color:#fff;font-family:inherit;font-size:13px" onchange="updateShowTime('${s.id}')">${hoursOpts}</select>
+          <span style="opacity:.4">:</span>
+          <select id="sm-${s.id}" style="background:#111;border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:7px 6px;color:#fff;font-family:inherit;font-size:13px" onchange="updateShowTime('${s.id}')">${minsOpts}</select>
+          <select id="sp-${s.id}" style="background:#111;border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:7px 6px;color:#fff;font-family:inherit;font-size:13px" onchange="updateShowTime('${s.id}')">
+            <option value="AM" ${st.p==='AM'?'selected':''}>AM</option>
+            <option value="PM" ${st.p==='PM'?'selected':''}>PM</option>
+          </select>
+        </div>
+      </div>
+      <div style="opacity:.4;padding-bottom:10px;font-size:18px">→</div>
+      <div>
+        <label class="fi" style="display:block;margin-bottom:5px">End Time</label>
+        <div style="display:flex;gap:4px;align-items:center">
+          <select id="eh-${s.id}" style="background:#111;border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:7px 6px;color:#fff;font-family:inherit;font-size:13px" onchange="updateShowTime('${s.id}')">${hoursOptsE}</select>
+          <span style="opacity:.4">:</span>
+          <select id="em-${s.id}" style="background:#111;border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:7px 6px;color:#fff;font-family:inherit;font-size:13px" onchange="updateShowTime('${s.id}')">${minsOptsE}</select>
+          <select id="ep-${s.id}" style="background:#111;border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:7px 6px;color:#fff;font-family:inherit;font-size:13px" onchange="updateShowTime('${s.id}')">
+            <option value="AM" ${et.p==='AM'?'selected':''}>AM</option>
+            <option value="PM" ${et.p==='PM'?'selected':''}>PM</option>
+          </select>
+        </div>
+      </div>
+    </div>`;
+  return div;
+}
+
+function onDayPreset(id, val) {
+  document.getElementById('customdays-'+id).style.display = val==='Custom' ? 'flex' : 'none';
+  updateShowDay(id);
+}
+
+function onCustomDay(id) { updateShowDay(id); }
+
+function updateShowDay(id) {
+  const preset = document.getElementById('daypreset-'+id).value;
+  let day;
+  if (preset === 'Custom') {
+    const checked = [...document.querySelectorAll(`#customdays-${id} input:checked`)].map(c=>c.value);
+    day = checked.length ? checked.join(', ') : 'Custom';
+  } else {
+    day = preset;
+  }
+  showSet(id, 'day', day);
+}
+
+function updateShowTime(id) {
+  const sh=document.getElementById('sh-'+id)?.value||'12';
+  const sm=document.getElementById('sm-'+id)?.value||'00';
+  const sp=document.getElementById('sp-'+id)?.value||'PM';
+  const eh=document.getElementById('eh-'+id)?.value||'02';
+  const em=document.getElementById('em-'+id)?.value||'00';
+  const ep=document.getElementById('ep-'+id)?.value||'PM';
+  const time = `${sh}:${sm} ${sp} – ${eh}:${em} ${ep}`;
+  showSet(id, 'time', time);
+}
+
+function addShow() {
+  const id = 'new_' + Date.now();
+  cfg.schedule.push({ id, show:'New Show', day:'Daily', time:'12:00 PM – 2:00 PM', djId:null, liveOverride:false, _new:true });
+  renderShows();
+}
+function removeShow(id) {
+  id = isNaN(id) ? id : parseInt(id);
+  if (!String(id).startsWith('new_')) cfg._show_deleted.push(id);
+  cfg.schedule = cfg.schedule.filter(s=>String(s.id)!==String(id));
+  renderShows();
+}
+function showSet(id, field, val) {
+  const s = cfg.schedule.find(s=>String(s.id)===String(id));
+  if (s) s[field] = val;
+}
+
+// ── HERO ──────────────────────────────────────────────────
+function loadHero() {
+  const h = cfg.hero||{};
+  document.getElementById('heroBgType').value  = h.type||'gradient';
+  document.getElementById('heroOverlay').value = h.overlayOpacity??0.35;
+  document.getElementById('overlayVal').textContent = h.overlayOpacity??0.35;
+  document.getElementById('heroTagline').value = h.tagline||'';
+  document.getElementById('heroH1').value      = h.headline1||'';
+  document.getElementById('heroH2').value      = h.headline2||'';
+  document.getElementById('heroH3').value      = h.headline3||'';
+  document.getElementById('heroSub').value     = h.subline||'';
+  heroSrc = h.src||'';
+  if (h.src && !h.src.startsWith('data:')) document.getElementById('heroUrl').value = h.src;
+  toggleHeroMedia();
+  if (h.src) showHeroPreview(h.src, h.type==='video');
+}
+function toggleHeroMedia() {
+  document.getElementById('heroMediaSection').style.display =
+    document.getElementById('heroBgType').value === 'gradient' ? 'none' : 'block';
+}
+function handleHeroFile(input) {
+  const f = input.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = e => { heroSrc = e.target.result; showHeroPreview(e.target.result, f.type.startsWith('video')); };
+  r.readAsDataURL(f);
+}
+function showHeroPreview(src, isVid) {
+  document.getElementById('heroPreview').style.display = 'block';
+  const img = document.getElementById('heroPreviewImg');
+  const vid = document.getElementById('heroPreviewVid');
+  if (isVid) { vid.src=src; vid.style.display='block'; img.style.display='none'; }
+  else       { img.src=src; img.style.display='block'; vid.style.display='none'; }
+}
+function clearHero() { heroSrc=''; document.getElementById('heroUrl').value=''; document.getElementById('heroPreview').style.display='none'; }
+
+// ── STATION ───────────────────────────────────────────────
+function loadStation() {
+  const s = cfg.station||{};
+  document.getElementById('stName').value     = s.name||'';
+  document.getElementById('stTz').value       = s.timezone||'America/New_York';
+  document.getElementById('stStream').value   = s.streamUrl||'';
+  document.getElementById('stMeta').value     = s.metadataUrl||'';
+  document.getElementById('stFallback').value = s.fallbackUrl||'';
+  document.getElementById('stBitrate').value  = s.bitrate||'';
+  document.getElementById('cboxId').value     = s.cboxId||'';
+  document.getElementById('cboxTag').value    = s.cboxTag||'';
+  document.getElementById('cboxEmbed').value  = s.cboxEmbed||'';
+  document.getElementById('stLogo').value     = s.logo||'';
+  if (s.logo) previewLogo(s.logo);
+}
+function uploadLogo(input) {
+  const f = input.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = e => { document.getElementById('stLogo').value=e.target.result; previewLogo(e.target.result); };
+  r.readAsDataURL(f);
+}
+function previewLogo(src) {
+  const img=document.getElementById('logoImg'), ph=document.getElementById('logoPlaceholder');
+  if(src){img.src=src;img.style.display='block';ph.style.display='none';}
+  else{img.style.display='none';ph.style.display='block';}
+  document.getElementById('stLogo').value=src;
+}
+function clearLogo() { document.getElementById('stLogo').value=''; document.getElementById('stLogoUrl').value=''; previewLogo(''); }
+
+// ── COLORS ────────────────────────────────────────────────
+const COLOR_LABELS = { primary:'Primary / Gold', accent:'Accent / Red', dark:'Background', navBg:'Nav Bar', playerBg:'Player', sectionBg:'Sections', footerBg:'Footer', text:'Text' };
+function loadColors() {
+  const g = document.getElementById('colorGrid'); g.innerHTML='';
+  const c = cfg.colors||{};
+  Object.entries(COLOR_LABELS).forEach(([k,label])=>{
+    const v = c[k]||'#111111';
+    const clean = v.startsWith('rgba')?'#111111':v;
+    const d=document.createElement('div'); d.className='color-field';
+    d.innerHTML=`<label>${label}</label><input type="color" value="${clean}" onchange="colSet('${k}',this.value)">`;
+    g.appendChild(d);
+  });
+}
+function colSet(k,v) { if(!cfg.colors)cfg.colors={}; cfg.colors[k]=v; }
+
+// ── DOWNLOADS ─────────────────────────────────────────────
+function renderDownloads() {
+  const el = document.getElementById('downloadList'); el.innerHTML='';
+  (cfg.downloads||[]).forEach(d => {
+    const div=document.createElement('div'); div.className='link-item-card';
+    div.innerHTML=`
+      <div class="link-item-img-col">
+        <div class="link-img-preview" id="dlimg-${d.id}">${d.img?`<img src="${esc(d.img)}" alt="">`:'<span class="link-img-placeholder">🖼</span>'}</div>
+        <label class="upload-photo-btn" style="font-size:9px;padding:4px 6px;margin-top:4px">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadLinkImg('dl',${d.id},this)"></label>
+        <button class="btn-sm" style="font-size:9px;margin-top:3px;width:100%" onclick="clearLinkImg('dl',${d.id})">Clear</button>
+      </div>
+      <div class="link-item-info">
+        <div class="row3">
+          <div class="field"><label>Platform</label><input type="text" value="${esc(d.platform)}" onchange="dlSet(${d.id},'platform',this.value)"></div>
+          <div class="field"><label>Sub-label</label><input type="text" value="${esc(d.sub)}" onchange="dlSet(${d.id},'sub',this.value)"></div>
+          <div class="field"><label>URL</label><input type="url" value="${esc(d.url)}" onchange="dlSet(${d.id},'url',this.value)"></div>
+        </div>
+      </div>
+      <button class="btn-sm danger" style="align-self:flex-start" onclick="removeDl(${d.id})">✕</button>`;
+    el.appendChild(div);
+  });
+}
+function dlSet(id,f,v){const d=cfg.downloads.find(x=>x.id===id);if(d)d[f]=v;}
+function removeDl(id){if(!String(id).startsWith('new_'))cfg._dl_deleted.push(id);cfg.downloads=cfg.downloads.filter(d=>d.id!==id);renderDownloads();}
+function addDownload(){cfg.downloads.push({id:'new_'+Date.now(),platform:'New Platform',sub:'Available on',img:'',url:'#',color:'#222',icon:'',_new:true});renderDownloads();}
+
+// ── SOCIALS ───────────────────────────────────────────────
+function renderSocials() {
+  const el = document.getElementById('socialList'); el.innerHTML='';
+  (cfg.socials||[]).forEach(s => {
+    const div=document.createElement('div'); div.className='link-item-card';
+    div.innerHTML=`
+      <div class="link-item-img-col">
+        <div class="link-img-preview" id="socimg-${s.id}">${s.img?`<img src="${esc(s.img)}" alt="">`:'<span class="link-img-placeholder">📱</span>'}</div>
+        <label class="upload-photo-btn" style="font-size:9px;padding:4px 6px;margin-top:4px">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadLinkImg('soc',${s.id},this)"></label>
+        <button class="btn-sm" style="font-size:9px;margin-top:3px;width:100%" onclick="clearLinkImg('soc',${s.id})">Clear</button>
+      </div>
+      <div class="link-item-info">
+        <div class="row2">
+          <div class="field"><label>Platform</label><input type="text" value="${esc(s.platform)}" onchange="socSet(${s.id},'platform',this.value)"></div>
+          <div class="field"><label>URL</label><input type="url" value="${esc(s.url)}" onchange="socSet(${s.id},'url',this.value)"></div>
+        </div>
+        <div class="field"><label>Background Colour</label>
+          <input type="color" value="${s.color==='gradient'?'#e1306c':s.color}" onchange="socSet(${s.id},'color',this.value)" style="width:100%;height:34px;border:1px solid rgba(255,255,255,.1);border-radius:6px;background:#111;padding:2px 4px;cursor:pointer">
+        </div>
+      </div>
+      <button class="btn-sm danger" style="align-self:flex-start" onclick="removeSoc(${s.id})">✕</button>`;
+    el.appendChild(div);
+  });
+}
+function socSet(id,f,v){const s=cfg.socials.find(x=>x.id===id);if(s)s[f]=v;}
+function removeSoc(id){if(!String(id).startsWith('new_'))cfg._soc_deleted.push(id);cfg.socials=cfg.socials.filter(s=>s.id!==id);renderSocials();}
+function addSocial(){cfg.socials.push({id:'new_'+Date.now(),platform:'New',url:'#',color:'#333',img:'',icon:'',_new:true});renderSocials();}
+
+// ── SHARED LINK IMAGE UPLOAD ──────────────────────────────
+function uploadLinkImg(type, id, input) {
+  const f=input.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    if(type==='dl') dlSet(id,'img',e.target.result);
+    else            socSet(id,'img',e.target.result);
+    refreshLinkImg(type, id);
+  };
+  r.readAsDataURL(f);
+}
+function clearLinkImg(type,id){
+  if(type==='dl') dlSet(id,'img',''); else socSet(id,'img','');
+  refreshLinkImg(type,id);
+}
+function refreshLinkImg(type,id){
+  const w=document.getElementById((type==='dl'?'dlimg':'socimg')+'-'+id);
+  if(!w) return;
+  const item=type==='dl'?cfg.downloads.find(x=>x.id===id):cfg.socials.find(x=>x.id===id);
+  w.innerHTML=item&&item.img?`<img src="${esc(item.img)}" alt="">`:type==='dl'?'<span class="link-img-placeholder">🖼</span>':'<span class="link-img-placeholder">📱</span>';
+}
+
+// ── FLAGS ─────────────────────────────────────────────────
+function renderFlags(){
+  const el=document.getElementById('flagList');el.innerHTML='';
+  (cfg.flags||[]).forEach((f,i)=>{
+    const div=document.createElement('div');div.className='list-item';
+    div.innerHTML=`<div class="list-item-info" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><label class="fi">Country Name</label><input class="fi-input" type="text" value="${esc(f.name)}" onchange="flagSet(${i},'name',this.value)"></div>
+      <div><label class="fi">Code (jm, tt…)</label><input class="fi-input" type="text" value="${esc(f.code)}" onchange="flagSet(${i},'code',this.value)"></div>
+    </div><button class="btn-sm danger" onclick="removeFlag(${i})">✕</button>`;
+    el.appendChild(div);
+  });
+}
+function flagSet(i,f,v){if(cfg.flags[i])cfg.flags[i][f]=v;}
+function removeFlag(i){
+  const f=cfg.flags[i];
+  if(f&&f.id&&!String(f.id).startsWith('new_')) cfg._flag_deleted.push(f.id);
+  cfg.flags.splice(i,1); renderFlags();
+}
+function addFlag(){cfg.flags.push({id:'new_'+Date.now(),name:'Country',code:'xx',_new:true});renderFlags();}
+
+// ── SAVE ──────────────────────────────────────────────────
+async function saveAll() {
+  if (!CRHD.isLoggedIn()) { showLogin(); return; }
+
+  const btn = document.getElementById('saveBtn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+
+  try {
+    // 1. Hero
+    let src = heroSrc || document.getElementById('heroUrl').value || '';
+    if (src && src.startsWith('data:image')) src = await CRHD.compressImage(src, 1200, 0.88);
+    await CRHD.saveSection('hero', {
+      type:           document.getElementById('heroBgType').value,
+      src,
+      overlayOpacity: parseFloat(document.getElementById('heroOverlay').value),
+      tagline:        document.getElementById('heroTagline').value,
+      headline1:      document.getElementById('heroH1').value,
+      headline2:      document.getElementById('heroH2').value,
+      headline3:      document.getElementById('heroH3').value,
+      subline:        document.getElementById('heroSub').value,
+    });
+
+    // 2. Station
+    let logo = document.getElementById('stLogo').value || document.getElementById('stLogoUrl')?.value || '';
+    if (logo && logo.startsWith('data:image')) logo = await CRHD.compressImagePNG(logo, 800);
+    await CRHD.saveSection('station', {
+      name:        document.getElementById('stName').value,
+      timezone:    document.getElementById('stTz').value,
+      streamUrl:   document.getElementById('stStream').value,
+      metadataUrl: document.getElementById('stMeta').value,
+      fallbackUrl: document.getElementById('stFallback').value,
+      bitrate:     document.getElementById('stBitrate').value,
+      cboxId:      document.getElementById('cboxId').value,
+      cboxTag:     document.getElementById('cboxTag').value,
+      cboxEmbed:   document.getElementById('cboxEmbed').value,
+      logo,
+    });
+
+    // 3. Colors
+    await CRHD.saveSection('colors', cfg.colors || {});
+
+    // 4. DJs — delete first, then create/update
+    for (const id of cfg._dj_deleted) await CRHD.deleteItem('djs', id);
+    cfg._dj_deleted = [];
+    for (const dj of (cfg.djs||[])) {
+      let photo = dj.photo || '';
+      if (photo.startsWith('data:image')) photo = await CRHD.compressImage(photo, 600, 0.92);
+      const data = { name: dj.name||'', bio: dj.bio||'', photo };
+      if (dj._new) {
+        const r = await CRHD.createItem('djs', data);
+        if (r && r.id) dj.id = r.id;
+        delete dj._new;
+      } else {
+        await CRHD.updateItem('djs', dj.id, data);
+      }
+    }
+
+    // 5. Schedule
+    for (const id of cfg._show_deleted) await CRHD.deleteItem('schedule', id);
+    cfg._show_deleted = [];
+    for (const s of (cfg.schedule||[])) {
+      const data = { show: s.show||'', day: s.day||'', time: s.time||'', djId: s.djId||null, liveOverride: s.liveOverride||false };
+      if (s._new) {
+        const r = await CRHD.createItem('schedule', data);
+        if (r && r.id) s.id = r.id;
+        delete s._new;
+      } else {
+        await CRHD.updateItem('schedule', s.id, data);
+      }
+    }
+
+    // 6. Downloads
+    for (const id of cfg._dl_deleted) await CRHD.deleteItem('downloads', id);
+    cfg._dl_deleted = [];
+    for (const d of (cfg.downloads||[])) {
+      const data = { platform: d.platform||'', sub: d.sub||'', url: d.url||'#', icon: d.icon||'', color: d.color||'#222', img: d.img||'' };
+      if (d._new) {
+        const r = await CRHD.createItem('downloads', data);
+        if (r && r.id) d.id = r.id;
+        delete d._new;
+      } else {
+        await CRHD.updateItem('downloads', d.id, data);
+      }
+    }
+
+    // 7. Socials
+    for (const id of cfg._soc_deleted) await CRHD.deleteItem('socials', id);
+    cfg._soc_deleted = [];
+    for (const s of (cfg.socials||[])) {
+      const data = { platform: s.platform||'', url: s.url||'#', icon: s.icon||'', color: s.color||'#333', img: s.img||'' };
+      if (s._new) {
+        const r = await CRHD.createItem('socials', data);
+        if (r && r.id) s.id = r.id;
+        delete s._new;
+      } else {
+        await CRHD.updateItem('socials', s.id, data);
+      }
+    }
+
+    // 8. Flags
+    for (const id of cfg._flag_deleted) await CRHD.deleteItem('flags', id);
+    cfg._flag_deleted = [];
+    for (const f of (cfg.flags||[])) {
+      const data = { name: f.name||'', code: f.code||'' };
+      if (f._new) {
+        const r = await CRHD.createItem('flags', data);
+        if (r && r.id) f.id = r.id;
+        delete f._new;
+      } else if (f.id) {
+        await CRHD.updateItem('flags', f.id, data);
+      }
+    }
+
+    showToast('✓ Saved!', false);
+    btn.textContent = '✓ Saved!'; btn.classList.add('saved');
+    setTimeout(()=>{ btn.textContent='Save Changes'; btn.classList.remove('saved'); btn.disabled=false; }, 2500);
+
+  } catch(err) {
+    console.error('Save error:', err);
+    showToast('✗ Save failed — check console', true);
+    btn.textContent = 'Save Changes'; btn.disabled = false;
+  }
+}
+
+function showToast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = isErr ? '#cc0000' : '#22c55e';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+// ── LOGIN ──────────────────────────────────────────────────
+function showLogin() {
+  document.getElementById('loginOverlay').style.display = 'flex';
+}
+async function doLogin() {
+  const u = document.getElementById('loginUser').value;
+  const p = document.getElementById('loginPass').value;
+  document.getElementById('loginError').textContent = '';
+  const r = await CRHD.login(u, p);
+  if (r.token) {
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('logoutBtn').style.display = 'block';
+    await loadCfg();
+  } else {
+    document.getElementById('loginError').textContent = r.error || 'Invalid credentials';
+  }
+}
+function doLogout() {
+  CRHD.logout();
+  document.getElementById('logoutBtn').style.display = 'none';
+  showLogin();
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

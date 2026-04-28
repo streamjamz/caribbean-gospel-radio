@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Schedule — Caribbean Gospel Radio HD</title>
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<nav class="site-nav">
+  <a href="index.html" class="logo-text">Caribbean Gospel <em>Radio HD</em></a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="schedule.html" style="color:var(--primary);opacity:1">Schedule</a>
+    <a href="#shows">Shows</a>
+    <a href="#about">About</a>
+    <a href="admin/index.html" style="opacity:0.4;font-size:10px">⚙ Admin</a>
+  </div>
+</nav>
+
+<!-- Decorative hero strip matching Design A -->
+<div style="background:var(--dark);border-bottom:2px solid var(--primary);padding:40px 40px 30px;position:relative;overflow:hidden">
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 20% 100%,rgba(0,100,50,0.35) 0%,transparent 60%),radial-gradient(ellipse at 80% 0%,rgba(150,70,0,0.3) 0%,transparent 50%)"></div>
+  <div style="position:relative;z-index:1">
+    <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--primary);margin-bottom:8px;opacity:0.8">On Air</div>
+    <h1 class="sched-page-title">Weekly <span class="hl">Schedule</span></h1>
+    <p class="sched-page-sub">All shows broadcast live · Times are Eastern Caribbean Time (ECT)</p>
+  </div>
+</div>
+
+<div class="sched-page" id="schedPage">
+  <div class="sched-week-grid" id="schedGrid"></div>
+</div>
+
+<!-- Minimal player bar on schedule page -->
+<div class="player-bar" style="position:sticky;bottom:0;z-index:50">
+  <audio id="audio-el-s" preload="none"></audio>
+  <div class="player-info" style="padding:10px 20px">
+    <div class="on-air-pill"><div class="air-dot"></div> Live Now</div>
+    <div class="track-title" id="sTrackTitle">Caribbean Gospel Radio HD — Live Stream</div>
+  </div>
+  <div class="player-controls">
+    <div class="waveform">
+      <div class="wbar" style="width:3px;height:22px"></div><div class="wbar" style="width:3px;height:14px"></div>
+      <div class="wbar" style="width:3px;height:28px"></div><div class="wbar" style="width:3px;height:18px"></div>
+      <div class="wbar" style="width:3px;height:24px"></div><div class="wbar" style="width:3px;height:12px"></div>
+    </div>
+    <button class="play-circle" id="sPlayBtn" onclick="toggleSPlay()" aria-label="Play"></button>
+    <div class="vol-wrap">
+      <div class="vol-track"><div class="vol-fill" style="width:70%"></div></div>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-copy">© <span id="footerYear"></span> Caribbean Gospel Radio HD · All Rights Reserved</div>
+  <div class="footer-right">Broadcasting the Gospel Across the Islands</div>
+</footer>
+
+<script src="js/store.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('footerYear').textContent = new Date().getFullYear();
+  const cfg = CRHD.getConfig();
+  applyColors(cfg.colors);
+  renderGrid(cfg.schedule, cfg.djs);
+  if (cfg.station?.streamUrl) document.getElementById('audio-el-s').src = cfg.station.streamUrl;
+  window.addEventListener('crhdConfigUpdate', e => {
+    applyColors(e.detail.colors);
+    renderGrid(e.detail.schedule, e.detail.djs);
+  });
+});
+
+function applyColors(col) {
+  const r = document.documentElement.style;
+  r.setProperty('--primary',    col.primary    || '#FFB700');
+  r.setProperty('--accent',     col.accent     || '#CC0000');
+  r.setProperty('--dark',       col.dark       || '#0a0a0a');
+  r.setProperty('--nav-bg',     col.navBg      || 'rgba(0,0,0,0.92)');
+  r.setProperty('--player-bg',  col.playerBg   || '#111111');
+  r.setProperty('--section-bg', col.sectionBg  || '#111111');
+  r.setProperty('--footer-bg',  col.footerBg   || '#0d0d0d');
+}
+
+function renderGrid(schedule, djs) {
+  const grid = document.getElementById('schedGrid');
+  grid.innerHTML = '';
+  (schedule || []).forEach(s => {
+    const dj   = (djs || []).find(d => d.id === s.djId);
+    const card = document.createElement('div');
+    card.className = 'sched-card' + (s.live ? ' live-now' : '');
+    card.innerHTML = `
+      <div class="scard-day">${s.day}</div>
+      <div class="scard-info">
+        <div class="scard-show">
+          ${s.show}
+          ${s.live ? '<span class="scard-live-pill"><span class="air-dot" style="background:#fff"></span>LIVE NOW</span>' : ''}
+        </div>
+        <div class="scard-dj">${dj ? 'Hosted by ' + dj.name : ''}</div>
+      </div>
+      <div class="scard-time">${s.time}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+function toggleSPlay() {
+  const a = document.getElementById('audio-el-s');
+  const btn = document.getElementById('sPlayBtn');
+  if (a.paused) { a.play().catch(()=>{}); btn.classList.add('playing'); }
+  else          { a.pause();              btn.classList.remove('playing'); }
+}
+</script>
+</body>
+</html>
